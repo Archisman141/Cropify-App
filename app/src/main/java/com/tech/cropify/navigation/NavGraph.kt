@@ -17,14 +17,18 @@ import com.tech.cropify.screens.ProfileScreen
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NavGraph(scrollState: LazyListState, navController: NavHostController){
+fun NavGraphs(
+    scrollState: LazyListState,
+    navController: NavHostController,
+    startDestination: Routes
+){
 
 
-    val startDestination = Routes.LoginScreen
+//    val startDestination = Routes.LoginScreen
 
     NavHost(
         navController,
-        startDestination = startDestination
+        startDestination = startDestination,
     ){
         mainGraph(navController)
     }
@@ -42,6 +46,10 @@ fun NavGraphBuilder.mainGraph(navController: NavHostController){
 
     composable<Routes.Profile> {
         ProfileScreen(navController)
+    }
+
+    composable<Routes.LoginScreen> {
+        AuthScreen()
     }
 
 

@@ -1,6 +1,7 @@
 package com.tech.cropify.screens
 
 import android.R
+import android.content.Context
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -26,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +49,7 @@ enum class AuthTab { LOGIN, REGISTER }
 fun AuthScreen() {
     var activeTab by remember { mutableStateOf(AuthTab.LOGIN) }
     val viewModel: LoginViewModel = hiltViewModel()
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -83,8 +86,8 @@ fun AuthScreen() {
                 label = "auth_tab_content"
             ) { tab ->
                 when (tab) {
-                    AuthTab.LOGIN    -> LoginForm(viewModel)
-                    AuthTab.REGISTER -> RegisterForm(viewModel)
+                    AuthTab.LOGIN    -> LoginForm(viewModel, context)
+                    AuthTab.REGISTER -> RegisterForm(viewModel, context)
                 }
             }
         }
@@ -249,7 +252,7 @@ fun AuthToggle(
 
 // ── Login form ────────────────────────────────────────────────────────────────
 @Composable
-fun LoginForm(viewModel: LoginViewModel) {
+fun LoginForm(viewModel: LoginViewModel, context: Context) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
@@ -320,7 +323,7 @@ fun LoginForm(viewModel: LoginViewModel) {
 
         Spacer(Modifier.height(4.dp))
         CropifyPrimaryButton(text = "Sign In", onClick = {
-            viewModel.login(emailId = email, password = password)
+            viewModel.login(emailId = email, password = password, context = context)
         })
 
         DividerWithText("or")
@@ -333,7 +336,7 @@ fun LoginForm(viewModel: LoginViewModel) {
 
 // ── Register form ─────────────────────────────────────────────────────────────
 @Composable
-fun RegisterForm(viewModel: LoginViewModel) {
+fun RegisterForm(viewModel: LoginViewModel, context: Context) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }

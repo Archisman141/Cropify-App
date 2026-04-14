@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresExtension
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
 import com.tech.cropify.navigation.NavGraphs
 import com.tech.cropify.navigation.Routes
@@ -26,6 +27,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         setContent {
 
             val accessToken = SharedPreferenceManager.getToken(this) ?: StateHolder.accessToken?.text

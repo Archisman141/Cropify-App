@@ -39,14 +39,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import com.tech.cropify.navigation.Routes
 import com.tech.cropify.ui.theme.CropifyColors
+import com.tech.cropify.util.SharedPreferenceManager
 import com.tech.cropify.viewModel.LoginViewModel
+import com.tech.cropify.viewModel.StateHolder
 
 enum class AuthTab { LOGIN, REGISTER }
 
 
 @Composable
-fun AuthScreen() {
+fun AuthScreen(navController: NavHostController) {
     var activeTab by remember { mutableStateOf(AuthTab.LOGIN) }
     val viewModel: LoginViewModel = hiltViewModel()
     val context = LocalContext.current
@@ -86,8 +90,8 @@ fun AuthScreen() {
                 label = "auth_tab_content"
             ) { tab ->
                 when (tab) {
-                    AuthTab.LOGIN    -> LoginForm(viewModel, context)
-                    AuthTab.REGISTER -> RegisterForm(viewModel, context)
+                    AuthTab.LOGIN    -> LoginForm(viewModel, context, navController)
+                    AuthTab.REGISTER -> RegisterForm(viewModel, context, navController)
                 }
             }
         }
@@ -252,10 +256,12 @@ fun AuthToggle(
 
 // ── Login form ────────────────────────────────────────────────────────────────
 @Composable
-fun LoginForm(viewModel: LoginViewModel, context: Context) {
+fun LoginForm(viewModel: LoginViewModel, context: Context, navController: NavHostController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showPassword by remember { mutableStateOf(false) }
+
+    val accessToken by viewModel.token.collectAsState()
 
     Column {
         // Badge
@@ -324,6 +330,12 @@ fun LoginForm(viewModel: LoginViewModel, context: Context) {
         Spacer(Modifier.height(4.dp))
         CropifyPrimaryButton(text = "Sign In", onClick = {
             viewModel.login(emailId = email, password = password, context = context)
+
+            if(accessToken != null ||
+                SharedPreferenceManager.getToken(context) !== null ||
+                StateHolder.accessToken?.text != null){
+                navController.navigate(Routes.MainScreen)
+            }
         })
 
         DividerWithText("or")
@@ -336,7 +348,7 @@ fun LoginForm(viewModel: LoginViewModel, context: Context) {
 
 // ── Register form ─────────────────────────────────────────────────────────────
 @Composable
-fun RegisterForm(viewModel: LoginViewModel, context: Context) {
+fun RegisterForm(viewModel: LoginViewModel, context: Context, navController: NavHostController) {
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -444,6 +456,8 @@ fun RegisterForm(viewModel: LoginViewModel, context: Context) {
         Spacer(Modifier.height(18.dp))
         CropifyPrimaryButton(text = "Create Account", onClick = {
             viewModel.register(username = "$firstName $lastName", password = password)
+
+            navController.navigate(Routes.LoginScreen)
         })
 
         Spacer(Modifier.height(12.dp))

@@ -28,8 +28,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-
         setContent {
 
             val accessToken = SharedPreferenceManager.getToken(this) ?: StateHolder.accessToken?.text

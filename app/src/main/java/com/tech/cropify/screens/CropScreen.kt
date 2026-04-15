@@ -187,7 +187,7 @@ fun CropScreen(navController: NavHostController) {
 
 // ── Top bar ───────────────────────────────────────────────────────────────────
 @Composable
-private fun CropTopBar(navController: NavHostController) {
+fun CropTopBar(navController: NavHostController) {
     Surface(color = Color.White, shadowElevation = 2.dp) {
         Row(
             modifier = Modifier

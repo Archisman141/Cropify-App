@@ -45,7 +45,6 @@ fun Profile(navController: NavController) {
     val context = LocalContext.current
 
     Scaffold(
-        bottomBar = { FarmBottomNav(navController, active = "profile") },
         containerColor = BgCream
     ) { innerPadding ->
         Column(

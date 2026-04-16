@@ -67,7 +67,6 @@ fun CropScreen(navController: NavHostController) {
         topBar = {
             CropTopBar(navController)
         },
-        bottomBar = { FarmBottomNav(navController, active = "crop") },
         containerColor = BgCream
     ) { innerPadding ->
         Column(
@@ -192,7 +191,6 @@ fun CropTopBar(navController: NavHostController) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
                 .padding(horizontal = 18.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween

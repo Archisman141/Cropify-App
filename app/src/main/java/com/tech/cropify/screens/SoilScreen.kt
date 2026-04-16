@@ -95,7 +95,6 @@ fun SoilScreen(navController: NavHostController) {
         topBar = {
             SoilTopBar(onBack = { navController.popBackStack() })
         },
-        bottomBar = { FarmBottomNav(navController, active = "soil") },
         containerColor = BgCream
     ){ innerPadding ->
         Column(
@@ -291,7 +290,6 @@ private fun SoilTopBar(onBack: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .statusBarsPadding()
             .background(CardWhite)
             .border(width = 1.dp, color = BorderTan, shape = RoundedCornerShape(0.dp))
             .padding(horizontal = 18.dp, vertical = 13.dp),

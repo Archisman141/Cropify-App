@@ -39,7 +39,6 @@ private val AlertBorder  = Color(0xFFF5C842)
 fun DashboardScreen(navController: NavController) {
     Scaffold(
         topBar = { DashboardTopBar(navController) },
-        bottomBar = { FarmBottomNav(navController, active = "home") },
         containerColor = BgCream
     ) { innerPadding ->
         LazyColumn(
@@ -121,7 +120,11 @@ fun DashboardScreen(navController: NavController) {
                 }
 
                 Spacer(Modifier.height(8.dp))
+
             }
+//            item{
+//                FarmBottomNav(navController, active = "home")
+//            }
         }
 
 
@@ -322,49 +325,6 @@ private fun RecentItem(
                 .padding(horizontal = 9.dp, vertical = 3.dp)
         ) {
             Text(badge, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = badgeText)
-        }
-    }
-}
-
-// ── Bottom Nav ────────────────────────────────────────────────────────────────
-@Composable
-fun FarmBottomNav(navController: NavController, active: String) {
-    val items = listOf(
-        Triple("🏠", "Home", "home") to Routes.Dashboard,
-        Triple("🌾", "Predict", "crop") to Routes.Crop,
-        Triple("🔬", "Detect", "disease") to Routes.Disease,
-        Triple("🏔️", "Soil", "soil") to Routes.Soil,
-        Triple("👤", "Profile", "profile") to Routes.Profile
-    )
-    Surface(
-        color = Color.White,
-        shadowElevation = 8.dp,
-        tonalElevation = 0.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-        ) {
-            for ((info, route) in items) {
-                val isActive = info.third == active
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { if (!isActive) navController.navigate(route) }
-                        .padding(vertical = 3.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(info.first, fontSize = 19.sp)
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        info.second,
-                        fontSize = 10.sp,
-                        color = if (isActive) AccentGreen else TextMuted,
-                        fontWeight = if (isActive) FontWeight.Medium else FontWeight.Normal
-                    )
-                }
-            }
         }
     }
 }

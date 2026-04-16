@@ -14,7 +14,7 @@ sealed class Routes {
     data object Signup : Routes()
 
     @Serializable
-    data object MainScreen : Routes() // Wrapper with BottomNav
+    data object MainScreen : Routes()
 
     @Serializable
     data object Dashboard : Routes()
@@ -29,8 +29,7 @@ sealed class Routes {
     data object Soil : Routes()
 
     @Serializable
-    data object Weather : Routes() // ✅ NEW TAB
-
+    data object Weather : Routes()
     @Serializable
     data object Profile : Routes()
 }

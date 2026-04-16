@@ -64,7 +64,6 @@ fun DiseaseScreen(navController: NavHostController) {
         topBar = {
             DiseaseTopBar(onBack = { navController.popBackStack() })
         },
-        bottomBar = { FarmBottomNav(navController, active = "disease") },
         containerColor = BgCream
     ){ innerPadding ->
 //        Column(
@@ -195,7 +194,6 @@ private fun DiseaseTopBar(onBack: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .background(CardWhite)
-            .statusBarsPadding()  // ← add this
             .border(width = 1.dp, color = BorderTan, shape = RoundedCornerShape(0.dp))
             .padding(horizontal = 18.dp, vertical = 13.dp),
         verticalAlignment     = Alignment.CenterVertically,

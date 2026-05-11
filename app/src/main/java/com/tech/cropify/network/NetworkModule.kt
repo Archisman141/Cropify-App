@@ -1,7 +1,7 @@
 package com.tech.cropify.network
 
 import android.content.Context
-import com.tech.cropify.api.ApiInterface
+import com.tech.cropify.network.ApiInterface
 import com.tech.cropify.network.AppEnv.BASE_URL
 import dagger.Module
 import dagger.Provides

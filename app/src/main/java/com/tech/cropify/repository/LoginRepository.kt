@@ -1,11 +1,11 @@
 package com.tech.cropify.repository
 
 import android.util.Log
-import com.tech.cropify.api.ApiInterface
-import com.tech.cropify.api.LoginBody
-import com.tech.cropify.api.LoginResponse
-import com.tech.cropify.api.RegisterBody
-import com.tech.cropify.api.RegisterResponse
+import com.tech.cropify.network.ApiInterface
+import com.tech.cropify.model.LoginBody
+import com.tech.cropify.model.LoginResponse
+import com.tech.cropify.model.RegisterBody
+import com.tech.cropify.model.RegisterResponse
 import javax.inject.Inject
 import javax.inject.Named
 

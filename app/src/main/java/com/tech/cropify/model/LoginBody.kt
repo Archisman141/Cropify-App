@@ -1,4 +1,4 @@
-package com.tech.cropify.api
+package com.tech.cropify.model
 
 data class LoginBody(
     val emailId: String,

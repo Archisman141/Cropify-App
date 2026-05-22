@@ -199,16 +199,6 @@ private fun DiseaseTopBar(onBack: () -> Unit) {
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        OutlinedButton(
-            onClick        = onBack,
-            shape          = RoundedCornerShape(8.dp),
-            contentPadding = PaddingValues(horizontal = 13.dp, vertical = 4.dp),
-            modifier       = Modifier.height(32.dp),
-            border         = ButtonDefaults.outlinedButtonBorder
-        ) {
-            Text("← Back", fontSize = 13.sp, color = TextBrown)
-        }
-
         Text(
             text       = "🔬  Disease Detection",
             fontSize   = 15.sp,

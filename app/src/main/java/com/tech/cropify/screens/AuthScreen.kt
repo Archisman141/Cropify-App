@@ -61,10 +61,8 @@ fun AuthScreen(navController: NavHostController) {
             .background(CropifyColors.Surface)
             .verticalScroll(rememberScrollState())
     ) {
-        // ── Hero section ──────────────────────────────────────────────────────
         HeroSection()
 
-        // ── Auth card ─────────────────────────────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -74,7 +72,6 @@ fun AuthScreen(navController: NavHostController) {
                 .background(CropifyColors.White)
                 .padding(horizontal = 24.dp, vertical = 28.dp)
         ) {
-            // Tab toggle
             AuthToggle(
                 activeTab = activeTab,
                 onTabChange = { activeTab = it }
@@ -100,7 +97,6 @@ fun AuthScreen(navController: NavHostController) {
     }
 }
 
-// ── Hero ──────────────────────────────────────────────────────────────────────
 @Composable
 fun HeroSection() {
     Box(
@@ -109,7 +105,6 @@ fun HeroSection() {
             .height(240.dp)
             .background(CropifyColors.ForestGreen)
     ) {
-        // Botanical leaf shapes — overlapping rotated boxes
         Box(
             modifier = Modifier
                 .size(140.dp)
@@ -179,7 +174,6 @@ fun HeroSection() {
 @Composable
 fun CropifyLeafIcon() {
     Box(modifier = Modifier.size(36.dp)) {
-        // Three overlapping leaf ellipses
         listOf(0f, 60f, -60f).forEach { angle ->
             Box(
                 modifier = Modifier
@@ -190,7 +184,6 @@ fun CropifyLeafIcon() {
                     .background(CropifyColors.LeafLight)
             )
         }
-        // Stem
         Box(
             modifier = Modifier
                 .width(3.dp)
@@ -202,7 +195,6 @@ fun CropifyLeafIcon() {
     }
 }
 
-// ── Tab toggle ────────────────────────────────────────────────────────────────
 @Composable
 fun AuthToggle(
     activeTab: AuthTab,
@@ -254,7 +246,6 @@ fun AuthToggle(
     }
 }
 
-// ── Login form ────────────────────────────────────────────────────────────────
 @Composable
 fun LoginForm(viewModel: LoginViewModel, context: Context, navController: NavHostController) {
     var email by remember { mutableStateOf("") }

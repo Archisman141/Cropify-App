@@ -164,7 +164,7 @@ private fun DashboardTopBar(navController: NavController) {
                     .clickable { navController.navigate(Routes.Profile) },
                 contentAlignment = Alignment.Center
             ) {
-                Text("RK", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                Text("AK", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color.White)
             }
         }
     }
@@ -182,7 +182,7 @@ private fun DashboardHeader(navController: NavController) {
         Column {
             Text("Good Morning ☀️", fontSize = 13.sp, color = Color(0xB3FFFFFF))
             Text(
-                "Rajesh Kumar",
+                "Archisman Khanra",
                 fontFamily = FontFamily.Serif,
                 fontSize = 21.sp,
                 fontWeight = FontWeight.SemiBold,

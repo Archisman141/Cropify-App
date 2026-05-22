@@ -195,14 +195,6 @@ fun CropTopBar(navController: NavHostController) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .border(1.dp, Color(0xFFB5A882), RoundedCornerShape(8.dp))
-                    .clickable { navController.popBackStack() }
-                    .padding(horizontal = 13.dp, vertical = 5.dp)
-            ) { Text("← Back", fontSize = 13.sp, color = Color(0xFF5A4A2E)) }
-
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Text("🌾", fontSize = 15.sp)
                 Text("Crop Prediction", fontFamily = FontFamily.Serif, fontSize = 15.sp, color = Color(0xFF2D4A1E))

@@ -10,7 +10,9 @@ import javax.inject.Inject
 import javax.inject.Named
 
 
-class LoginRepository @Inject constructor(@Named("backendApiService") val api: ApiInterface){
+class LoginRepository @Inject constructor(
+    @Named("backendApiService") val api: ApiInterface
+){
     suspend fun login(emailId: String, password: String): Result<LoginResponse>{
         return try {
             val response = api.login(

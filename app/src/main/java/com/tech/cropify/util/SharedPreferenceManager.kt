@@ -23,6 +23,13 @@ object SharedPreferenceManager {
         return prefs.getString(TOKEN,null)
     }
 
+    fun clearToken(context: Context) {
+        context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .remove(TOKEN)
+            .apply()
+    }
+
     fun saveUserProfile(context: Context, profile: String) {
         val sharedPreferences = context.getSharedPreferences("MyAppPreferences", Context.MODE_PRIVATE)
         sharedPreferences.edit().putString("user_profile", profile).apply()

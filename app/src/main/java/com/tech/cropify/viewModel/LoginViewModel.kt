@@ -24,18 +24,24 @@ class LoginViewModel @Inject constructor(
     private var _token = MutableStateFlow<String?>(null)
     val token: StateFlow<String?> = _token
 
+    private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
+    val authState: StateFlow<AuthState> = _authState
+
     fun login(emailId: String, password: String, context: Context){
         viewModelScope.launch {
             try {
                 val response = repository.login(emailId, password)
+                _authState.value = AuthState.Loading
                 response.fold(
                     onSuccess = {
                         _token.value = it.token
                         SharedPreferenceManager.saveToken(context = context, token = it.token)
                         StateHolder.accessToken?.text = it.token
+                        AuthState.LoginSuccess
                         Log.d(TAG,"Success access token: ${it.token}")
                     },
                     onFailure = {
+                        AuthState.Error(it.message ?: "Unknown error")
                         Log.d(TAG,"Failure: ${it.message}")
                     }
                 )
@@ -63,6 +69,25 @@ class LoginViewModel @Inject constructor(
             }
         }
     }
+
+    fun logout(context: Context) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            val result = repository.logout(context)
+            _authState.value = result.fold(
+                onSuccess = { AuthState.LoggedOut },
+                onFailure = { AuthState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+}
+
+sealed class AuthState {
+    object Idle : AuthState()
+    object Loading : AuthState()
+    object LoginSuccess : AuthState()
+    object LoggedOut : AuthState()
+    data class Error(val message: String) : AuthState()
 }
 
 

@@ -1,6 +1,5 @@
 package com.tech.cropify.screens
 
-import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
@@ -8,13 +7,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,12 +22,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -46,12 +41,11 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -59,6 +53,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.tech.cropify.navigation.Routes
+import com.tech.cropify.viewModel.LoginViewModel
 
 private val PrimaryBlue = Color(0xFF274185)
 private val AccentOrange = Color(0xFFF47920)
@@ -71,6 +66,8 @@ fun MainScreen(navController: NavHostController) {
     var bottomBarType by remember { mutableStateOf(BottomBarType.DASHBOARD) }
 
     val isDarkTheme = isSystemInDarkTheme()
+
+    val viewModel: LoginViewModel = hiltViewModel()
 
     Scaffold(
         bottomBar = {
@@ -128,7 +125,7 @@ fun MainScreen(navController: NavHostController) {
         NavHost(
             navController = bottomNavController,
             startDestination = BottomNavItem.Home.route,  // "home"
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.padding(padding),
         ) {
             composable(BottomNavItem.Home.route) {
                 DashboardScreen(navController)
@@ -147,7 +144,7 @@ fun MainScreen(navController: NavHostController) {
                 WeatherScreen(navController)
             }
             composable<Routes.Profile> {
-                Profile(navController)
+                Profile(navController, viewModel)
             }
         }
     }

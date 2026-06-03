@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresExtension
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -17,6 +18,7 @@ import com.tech.cropify.screens.MainScreen
 import com.tech.cropify.screens.Profile
 import com.tech.cropify.screens.SoilScreen
 import com.tech.cropify.screens.WeatherScreen
+import com.tech.cropify.viewModel.LoginViewModel
 
 @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -27,18 +29,20 @@ fun NavGraphs(
     startDestination: Routes = Routes.Landing
 ) {
 
+    val viewModel: LoginViewModel = hiltViewModel()
+
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
-        mainGraph(navController)
+        mainGraph(navController, viewModel)
     }
 }
 
 
 
 @RequiresApi(Build.VERSION_CODES.O)
-fun NavGraphBuilder.mainGraph(navController: NavHostController) {
+fun NavGraphBuilder.mainGraph(navController: NavHostController, viewModel: LoginViewModel) {
 
     // 🔹 Landing
 //    composable<Routes.Landing> {
@@ -83,6 +87,6 @@ fun NavGraphBuilder.mainGraph(navController: NavHostController) {
 
     // 🔹 Profile
     composable<Routes.Profile> {
-        Profile(navController)
+        Profile(navController, viewModel)
     }
 }

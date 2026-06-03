@@ -25,7 +25,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.tech.cropify.navigation.Routes
 import com.tech.cropify.util.SharedPreferenceManager.getUserProfile
+import com.tech.cropify.viewModel.LoginViewModel
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -41,7 +43,7 @@ private val TextDark     = Color(0xFF2A2010)
 private val TextMuted    = Color(0xFF8A7A5A)
 
 @Composable
-fun Profile(navController: NavController) {
+fun Profile(navController: NavController, viewModel: LoginViewModel) {
     val context = LocalContext.current
 
     Scaffold(
@@ -118,7 +120,10 @@ fun Profile(navController: NavController) {
                         .clip(RoundedCornerShape(13.dp))
                         .background(Color(0xFFFEE8E8))
                         .border(1.dp, Color(0xFFF0C0C0), RoundedCornerShape(13.dp))
-                        .clickable { /* sign out */ }
+                        .clickable {
+                            viewModel.logout(context)
+                            navController.navigate(Routes.LoginScreen)
+                        }
                         .padding(14.dp),
                     contentAlignment = Alignment.Center
                 ) {

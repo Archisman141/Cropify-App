@@ -1,11 +1,13 @@
 package com.tech.cropify.repository
 
+import android.content.Context
 import android.util.Log
 import com.tech.cropify.network.ApiInterface
 import com.tech.cropify.model.LoginBody
 import com.tech.cropify.model.LoginResponse
 import com.tech.cropify.model.RegisterBody
 import com.tech.cropify.model.RegisterResponse
+import com.tech.cropify.util.SharedPreferenceManager
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -52,6 +54,26 @@ class LoginRepository @Inject constructor(
         }catch (e: Exception){
             Log.e("response","Login exception: ${e.message}")
             Result.failure(Exception("Login failed"))
+        }
+    }
+
+    suspend fun logout(context: Context): Result<String> {
+        return try {
+            val token = SharedPreferenceManager.getToken(context = context)
+                ?: return Result.failure(Exception("No token found"))
+
+            val response = api.logout(token)
+
+            SharedPreferenceManager.clearToken(context)
+
+            if (response.isSuccessful) {
+                Result.success(response.body() ?: "Logged out")
+            } else {
+                Result.failure(Exception("Logout failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            SharedPreferenceManager.clearToken(context)
+            Result.failure(e)
         }
     }
 }

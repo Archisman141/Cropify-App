@@ -2,6 +2,7 @@ package com.tech.cropify.repository
 
 import android.content.Context
 import android.util.Log
+import com.tech.cropify.model.GoogleLoginRequest
 import com.tech.cropify.network.ApiInterface
 import com.tech.cropify.model.LoginBody
 import com.tech.cropify.model.LoginResponse
@@ -33,6 +34,26 @@ class LoginRepository @Inject constructor(
         }catch (e: Exception){
             Log.e("response","Login exception: ${e.message}")
             Result.failure(Exception("Login failed"))
+        }
+    }
+
+    suspend fun loginWithGoogle(idToken: String): Result<LoginResponse> {
+        return try {
+            val response = api.loginWithGoogle(
+                GoogleLoginRequest(idtoken = idToken)
+            )
+
+            if (response.isSuccessful) {
+                response.body()?.let {
+                    Result.success(it)
+                } ?: Result.failure(Exception("Empty response body"))
+            } else {
+                Log.e("AuthRepository", "Login error: ${response.errorBody()?.string()}")
+                Result.failure(Exception("Login failed: ${response.code()}"))
+            }
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Login exception: ${e.message}")
+            Result.failure(Exception("Login failed: ${e.message}"))
         }
     }
 

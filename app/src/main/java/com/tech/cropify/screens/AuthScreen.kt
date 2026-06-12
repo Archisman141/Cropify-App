@@ -1,7 +1,11 @@
 package com.tech.cropify.screens
 
 import android.R
+import android.widget.Toast
 import android.content.Context
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -42,7 +46,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.tech.cropify.navigation.Routes
 import com.tech.cropify.ui.theme.CropifyColors
+import com.tech.cropify.util.GoogleSignInUtils
 import com.tech.cropify.util.SharedPreferenceManager
+import com.tech.cropify.viewModel.AuthUiState
 import com.tech.cropify.viewModel.LoginViewModel
 import com.tech.cropify.viewModel.StateHolder
 
@@ -54,46 +60,94 @@ fun AuthScreen(navController: NavHostController) {
     var activeTab by remember { mutableStateOf(AuthTab.LOGIN) }
     val viewModel: LoginViewModel = hiltViewModel()
     val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsState()
+    val scope = rememberCoroutineScope()
+    val accessToken by viewModel.token.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(CropifyColors.Surface)
-            .verticalScroll(rememberScrollState())
-    ) {
-        HeroSection()
+    LaunchedEffect(accessToken) {
+        Log.d("AuthScreen", "accessToken changed: $accessToken")
+        if (accessToken != null) {
+            navController.navigate(Routes.MainScreen)
+        }
+    }
 
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .offset(y = (-20).dp)
-                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                .background(CropifyColors.White)
-                .padding(horizontal = 24.dp, vertical = 28.dp)
+                .fillMaxSize()
+                .background(CropifyColors.Surface)
+                .verticalScroll(rememberScrollState())
         ) {
-            AuthToggle(
-                activeTab = activeTab,
-                onTabChange = { activeTab = it }
-            )
+            HeroSection()
 
-            Spacer(Modifier.height(20.dp))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .offset(y = (-20).dp)
+                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+                    .background(CropifyColors.White)
+                    .padding(horizontal = 24.dp, vertical = 28.dp)
+            ) {
+                AuthToggle(
+                    activeTab = activeTab,
+                    onTabChange = { activeTab = it }
+                )
 
-            AnimatedContent(
-                targetState = activeTab,
-                transitionSpec = {
-                    fadeIn(tween(220)) togetherWith fadeOut(tween(180))
-                },
-                label = "auth_tab_content"
-            ) { tab ->
-                when (tab) {
-                    AuthTab.LOGIN    -> LoginForm(viewModel, context, navController)
-                    AuthTab.REGISTER -> RegisterForm(viewModel, context, navController)
+                Spacer(Modifier.height(20.dp))
+
+                AnimatedContent(
+                    targetState = activeTab,
+                    transitionSpec = {
+                        fadeIn(tween(220)) togetherWith fadeOut(tween(180))
+                    },
+                    label = "auth_tab_content"
+                ) { tab ->
+                    when (tab) {
+                        AuthTab.LOGIN    -> LoginForm(viewModel, context, navController)
+                        AuthTab.REGISTER -> RegisterForm(viewModel, context, navController)
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+        }
+
+        // ── Full screen loading overlay ─────────────────────────────
+        if (uiState is AuthUiState.Loading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.35f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(CropifyColors.White),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = CropifyColors.ForestGreen,
+                        strokeWidth = 3.dp,
+                        modifier = Modifier.size(32.dp)
+                    )
                 }
             }
         }
 
-        Spacer(Modifier.height(24.dp))
+        // ── Error toast/snackbar ─────────────────────────────────────
+        if (uiState is AuthUiState.Error) {
+            LaunchedEffect(uiState) {
+                Toast.makeText(
+                    context,
+                    (uiState as AuthUiState.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
+//                viewModel.resetState()
+            }
+        }
     }
 }
 
@@ -331,7 +385,7 @@ fun LoginForm(viewModel: LoginViewModel, context: Context, navController: NavHos
 
         DividerWithText("or")
 
-        GoogleSignInButton()
+        GoogleSignInButton(viewModel)
 
         Spacer(Modifier.height(16.dp))
     }
@@ -616,9 +670,27 @@ fun DividerWithText(text: String) {
 }
 
 @Composable
-fun GoogleSignInButton() {
+fun GoogleSignInButton(viewModel: LoginViewModel) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val uiState by viewModel.uiState.collectAsState()
+    val isLoading = uiState is AuthUiState.Loading
+
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) {
+        GoogleSignInUtils.doGoogleSignIn(context, scope, null) { idToken, _, _ ->
+            viewModel.loginWithGoogle(idToken, context)
+        }
+    }
+
     OutlinedButton(
-        onClick = { },
+        onClick = {
+            GoogleSignInUtils.doGoogleSignIn(context, scope, launcher) { idToken, _, _ ->
+                viewModel.loginWithGoogle(idToken, context)
+            }
+        },
+        enabled = !isLoading,
         shape = RoundedCornerShape(12.dp),
         border = BorderStroke(1.5.dp, CropifyColors.GoogleBorder),
         colors = ButtonDefaults.outlinedButtonColors(
@@ -629,16 +701,23 @@ fun GoogleSignInButton() {
             .fillMaxWidth()
             .height(48.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Google G icon using colored boxes
-            GoogleIcon()
-            Text(
-                text = "Continue with Google",
-                style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium)
+        if (isLoading) {
+            CircularProgressIndicator(
+                color = CropifyColors.ForestGreen,
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(18.dp)
             )
+        } else {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                GoogleIcon()
+                Text(
+                    text = "Continue with Google",
+                    style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                )
+            }
         }
     }
 }

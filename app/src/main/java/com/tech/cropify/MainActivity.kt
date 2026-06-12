@@ -39,11 +39,12 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val scrollState = rememberLazyListState()
 
-            val startDestination = //if(accessToken!=null){
+            val startDestination = if(accessToken!=null){
                 Routes.MainScreen
-//            }else{
-//                Routes.LoginScreen
-//            }
+            }else{
+                Routes.LoginScreen
+            }
+
 
             NavGraphs(scrollState = scrollState, navController = navController, startDestination)
 

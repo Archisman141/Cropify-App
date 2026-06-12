@@ -6,4 +6,6 @@ plugins {
     alias(libs.plugins.google.hilt.android) apply false
     alias(libs.plugins.google.ksp)
     alias(libs.plugins.kotlinx.serialization).apply(false)
+//    id("com.google.gms.google-services") version "4.4.4" apply false
+    alias(libs.plugins.google.services) apply false
 }

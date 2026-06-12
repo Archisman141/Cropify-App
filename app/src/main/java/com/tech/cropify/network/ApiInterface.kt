@@ -1,5 +1,6 @@
 package com.tech.cropify.network
 
+import com.tech.cropify.model.GoogleLoginRequest
 import com.tech.cropify.model.LoginBody
 import com.tech.cropify.model.LoginResponse
 import com.tech.cropify.model.RegisterBody
@@ -14,6 +15,11 @@ interface ApiInterface {
     @POST("auth/login")
     suspend fun login(
         @Body body: LoginBody
+    ): Response<LoginResponse>
+
+    @POST("auth/google-login")
+    suspend fun loginWithGoogle(
+        @Body body: GoogleLoginRequest
     ): Response<LoginResponse>
 
     @POST("auth/register")

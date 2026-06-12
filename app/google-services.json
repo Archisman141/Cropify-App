@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "799848681483",
+    "project_id": "cropify-78809",
+    "storage_bucket": "cropify-78809.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:799848681483:android:6ebf5b538af977071cf70e",
+        "android_client_info": {
+          "package_name": "com.tech.cropify"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "799848681483-sscgdu6bfemgi8h8kutaclknbm4vsrpb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tech.cropify",
+            "certificate_hash": "6f4e35dd49452edd082cc468f7d7675d9a999ed7"
+          }
+        },
+        {
+          "client_id": "799848681483-be818qtdnobi7cs3ubth29u0o13n38jm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPVMV1tMEST14QJVUKxvgHXvNxDsqdhJk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "799848681483-be818qtdnobi7cs3ubth29u0o13n38jm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

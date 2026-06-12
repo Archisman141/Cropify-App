@@ -5,19 +5,20 @@ plugins {
     alias(libs.plugins.google.ksp)
     id("kotlin-parcelize")
     alias(libs.plugins.kotlinx.serialization)
-
+//    id("com.google.gms.google-services")
+    alias(libs.plugins.google.services)
 }
 
 android {
     namespace = "com.tech.cropify"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.tech.cropify"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -41,6 +42,11 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    packaging {
+        resources {
+            excludes += "assets/PublicSuffixDatabase.list"
+        }
     }
 }
 
@@ -92,4 +98,15 @@ dependencies {
     //paging
     implementation(libs.androidx.paging.runtime.ktx)
     implementation(libs.androidx.paging.compose)
+
+    // Google sign in authentication
+    implementation(libs.play.services.auth)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+    implementation(libs.firebase.auth)
+
+    implementation (libs.androidx.credentials)
+    implementation( libs.androidx.credentials.play.services.auth)
+    implementation (libs.googleid)
+
 }

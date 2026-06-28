@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -23,6 +25,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+        val agroApiKey = localProperties.getProperty("AGRO_API_KEY") ?: ""
+
+        buildConfigField("String", "AGRO_API_KEY", "\"$agroApiKey\"")
     }
 
     buildTypes {
@@ -108,5 +119,6 @@ dependencies {
     implementation (libs.androidx.credentials)
     implementation( libs.androidx.credentials.play.services.auth)
     implementation (libs.googleid)
+    implementation(libs.play.services.location)
 
 }

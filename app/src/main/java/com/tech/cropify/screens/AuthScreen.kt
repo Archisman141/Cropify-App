@@ -679,14 +679,14 @@ fun GoogleSignInButton(viewModel: LoginViewModel) {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
-        GoogleSignInUtils.doGoogleSignIn(context, scope, null) { idToken, _, _ ->
+        GoogleSignInUtils.doGoogleSignIn(context, scope, null) { idToken, _, _, _, _ ->
             viewModel.loginWithGoogle(idToken, context)
         }
     }
 
     OutlinedButton(
         onClick = {
-            GoogleSignInUtils.doGoogleSignIn(context, scope, launcher) { idToken, _, _ ->
+            GoogleSignInUtils.doGoogleSignIn(context, scope, launcher) { idToken,  _, _, _, _ ->
                 viewModel.loginWithGoogle(idToken, context)
             }
         },
@@ -712,7 +712,15 @@ fun GoogleSignInButton(viewModel: LoginViewModel) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                GoogleIcon()
+//                GoogleIcon()
+
+                Icon(
+                    painter = painterResource(com.tech.cropify.R.drawable.google_icon),
+                    contentDescription = "Google Icon",
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.Unspecified
+                )
+
                 Text(
                     text = "Continue with Google",
                     style = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium)

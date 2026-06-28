@@ -22,6 +22,7 @@ navigationCommonKtx = "2.9.8"
 navigationRuntimeKtx = "2.9.7"
 playServicesAuth = "21.6.0"
 googleid = "1.2.0"
+playServicesLocation = "21.3.0"
 runtime = "1.11.2"
 material = "1.8.1"
 pagingCompose = "3.5.0"
@@ -70,6 +71,7 @@ googleid = { module = "com.google.android.libraries.identity.googleid:googleid",
 #Credentials
 androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

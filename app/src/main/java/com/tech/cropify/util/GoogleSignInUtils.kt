@@ -30,7 +30,7 @@ class GoogleSignInUtils {
             context: Context,
             scope: CoroutineScope,
             launcher: ManagedActivityResultLauncher<Intent, ActivityResult>?,
-            login: (idToken: String, email: String, name: String?) -> Unit
+            login: (idToken: String, email: String, name: String?, phoneNumber: String?, photoUrl: String) -> Unit
         ) {
             val credentialManager = CredentialManager.create(context)
 
@@ -91,7 +91,7 @@ class GoogleSignInUtils {
 
         private fun handleCredentialResult(
             result: androidx.credentials.GetCredentialResponse,
-            login: (idToken: String, email: String, name: String?) -> Unit
+            login: (idToken: String, email: String, name: String?, phoneNumber: String?, photoUrl: String) -> Unit
         ) {
             when (val credential = result.credential) {
                 is CustomCredential -> {
@@ -102,12 +102,17 @@ class GoogleSignInUtils {
                         val email = googleIdTokenCredential.id // email
                         val name = googleIdTokenCredential.displayName
 
-                        // (Optional) sign into Firebase too, if you use Firebase elsewhere
                         val firebaseCred = GoogleAuthProvider.getCredential(idToken, null)
                         Firebase.auth.signInWithCredential(firebaseCred)
 
+                        val user = Firebase.auth.currentUser
+                        val uid = user?.uid
+                        val photoUrl = user?.photoUrl?.toString() ?: ""
+                        val phoneNumber = user?.phoneNumber
+                        val emailVerified = user?.isEmailVerified
+
                         // Trigger your backend login call
-                        login(idToken, email, name)
+                        login(idToken, email, name,phoneNumber, photoUrl)
                     } else {
                         Log.e("GoogleSignIn", "Unexpected credential type: ${credential.type}")
                     }

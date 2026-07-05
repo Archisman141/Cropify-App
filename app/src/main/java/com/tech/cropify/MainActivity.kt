@@ -14,9 +14,13 @@ import androidx.navigation.compose.rememberNavController
 import com.tech.cropify.navigation.NavGraphs
 import com.tech.cropify.navigation.Routes
 import com.tech.cropify.screens.AuthScreen
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.tech.cropify.ui.theme.CropifyTheme
 import com.tech.cropify.util.SharedPreferenceManager
 import com.tech.cropify.viewModel.StateHolder
+import com.tech.cropify.viewModel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -29,25 +33,25 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
+            val themeViewModel: ThemeViewModel = hiltViewModel()
+            val themeMode by themeViewModel.theme.collectAsState()
 
-            val accessToken = SharedPreferenceManager.getToken(this) ?: StateHolder.accessToken?.text
+            CropifyTheme(themeMode = themeMode) {
+                val accessToken = SharedPreferenceManager.getToken(this) ?: StateHolder.accessToken?.text
 
-            Log.d("MainActivity","Access Token:$accessToken")
+                Log.d("MainActivity", "Access Token:$accessToken")
 
-//            ForegroundService.startService(this)
+                val navController = rememberNavController()
+                val scrollState = rememberLazyListState()
 
-            val navController = rememberNavController()
-            val scrollState = rememberLazyListState()
+                val startDestination = if (accessToken != null) {
+                    Routes.MainScreen
+                } else {
+                    Routes.LoginScreen
+                }
 
-            val startDestination = if(accessToken!=null){
-                Routes.MainScreen
-            }else{
-                Routes.LoginScreen
+                NavGraphs(scrollState = scrollState, navController = navController, startDestination)
             }
-
-
-            NavGraphs(scrollState = scrollState, navController = navController, startDestination)
-
         }
     }
 }

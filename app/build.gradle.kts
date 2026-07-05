@@ -62,6 +62,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.compose.ui.text.google.fonts)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -109,6 +110,12 @@ dependencies {
     //paging
     implementation(libs.androidx.paging.runtime.ktx)
     implementation(libs.androidx.paging.compose)
+
+    //utils
+    implementation(libs.androidx.emoji2)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.webkit)
+    implementation(libs.libphonenumber)
 
     // Google sign in authentication
     implementation(libs.play.services.auth)

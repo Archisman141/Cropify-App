@@ -15,6 +15,7 @@ import com.tech.cropify.screens.CropScreen
 import com.tech.cropify.screens.DashboardScreen
 import com.tech.cropify.screens.DiseaseScreen
 import com.tech.cropify.screens.MainScreen
+import com.tech.cropify.screens.NotificationScreen
 import com.tech.cropify.screens.Profile
 import com.tech.cropify.screens.SoilScreen
 import com.tech.cropify.screens.WeatherScreen
@@ -44,19 +45,15 @@ fun NavGraphs(
 @RequiresApi(Build.VERSION_CODES.O)
 fun NavGraphBuilder.mainGraph(navController: NavHostController, viewModel: LoginViewModel) {
 
-    // 🔹 Landing
-//    composable<Routes.Landing> {
-//        LandingScreen(navController)
-//    }
 
     // 🔹 Auth
     composable<Routes.LoginScreen> {
         AuthScreen(navController)
     }
 
-//    composable<Routes.Signup> {
-//        SignupScreen(navController)
-//    }
+    composable<Routes.NotificationScreen> {
+        NotificationScreen(navController)
+    }
 
     // 🔹 Main Container (Bottom Nav)
     composable<Routes.MainScreen> {

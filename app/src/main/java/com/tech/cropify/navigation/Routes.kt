@@ -32,4 +32,7 @@ sealed class Routes {
     data object Weather : Routes()
     @Serializable
     data object Profile : Routes()
+
+    @Serializable
+    data object NotificationScreen: Routes()
 }

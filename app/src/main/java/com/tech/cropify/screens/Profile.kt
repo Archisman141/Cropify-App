@@ -24,10 +24,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.tech.cropify.navigation.Routes
 import com.tech.cropify.util.SharedPreferenceManager.getUserProfile
 import com.tech.cropify.viewModel.LoginViewModel
+import com.tech.cropify.viewModel.ProfileViewModel
 import java.io.File
 import java.io.FileOutputStream
 import java.util.UUID
@@ -43,8 +45,9 @@ private val TextDark     = Color(0xFF2A2010)
 private val TextMuted    = Color(0xFF8A7A5A)
 
 @Composable
-fun Profile(navController: NavController, viewModel: LoginViewModel) {
+fun Profile(navController: NavController, viewModel: LoginViewModel, profileViewModel: ProfileViewModel) {
     val context = LocalContext.current
+    val profile by profileViewModel.profile.collectAsState()
 
     Scaffold(
         containerColor = BgCream
@@ -56,17 +59,19 @@ fun Profile(navController: NavController, viewModel: LoginViewModel) {
                 .verticalScroll(rememberScrollState())
         ) {
             // ── Header ────────────────────────────────────────────────────────
-            ProfileHeader()
+            ProfileHeader(profile.userName, profile.locationLabel) {
+                navController.navigate(Routes.EditProfile)
+            }
 
             // ── Body ──────────────────────────────────────────────────────────
             Column(modifier = Modifier.padding(16.dp)) {
 
                 // Farm Details
                 SettingsSection(label = "Farm Details") {
-                    SettingsRow(icon = "🌾", title = "Crop Season", sub = "Kharif 2024–25", showArrow = true)
-                    SettingsRow(icon = "📍", title = "Location", sub = "Pune, Maharashtra", showArrow = true)
-                    SettingsRow(icon = "📐", title = "Farm Size", sub = "3.2 acres", showArrow = true)
-                    SettingsRow(icon = "🌱", title = "Soil Type", sub = "Black Cotton Soil", showArrow = true)
+                    SettingsRow(icon = "🌾", title = "Crop Season", sub = profile.cropSeason, showArrow = true)
+                    SettingsRow(icon = "📍", title = "Location", sub = profile.locationLabel, showArrow = true)
+                    SettingsRow(icon = "📐", title = "Farm Size", sub = "${profile.farmSizeAcres} acres", showArrow = true)
+                    SettingsRow(icon = "🌱", title = "Soil Type", sub = profile.soilType.displayName, showArrow = true)
                 }
 
                 Spacer(Modifier.height(18.dp))
@@ -138,7 +143,7 @@ fun Profile(navController: NavController, viewModel: LoginViewModel) {
 
 // ── Profile hero header ───────────────────────────────────────────────────────
 @Composable
-private fun ProfileHeader() {
+private fun ProfileHeader(name: String, location: String, onEditClick: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -161,31 +166,31 @@ private fun ProfileHeader() {
             ) { Text("👨‍🌾", fontSize = 32.sp) }
 
             Spacer(Modifier.height(12.dp))
-            Text("Archisman Khanra", fontFamily = FontFamily.Serif, fontSize = 22.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
-            Text("Farmer · Hooghly, WestBengal", fontSize = 13.sp, color = Color(0xB3FFFFFF))
+            Text(name, fontFamily = FontFamily.Serif, fontSize = 22.sp, color = Color.White, fontWeight = FontWeight.SemiBold)
+            Text("Farmer · $location", fontSize = 13.sp, color = Color(0xB3FFFFFF))
 
-            // Stats
-            Row(
-                modifier = Modifier.padding(top = 14.dp),
-                horizontalArrangement = Arrangement.spacedBy(28.dp)
-            ) {
-                ProfileStat("24", "Reports")
-                ProfileStat("8", "Crops")
-                ProfileStat("94%", "Accuracy")
-            }
-
-            Spacer(Modifier.height(14.dp))
-
-            // Edit button
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
                     .background(YellowAccent)
-                    .clickable { }
+                    .clickable { onEditClick() }
                     .padding(horizontal = 18.dp, vertical = 8.dp)
             ) {
                 Text("Edit Profile", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1A3A0F))
             }
+
+//            Spacer(Modifier.height(14.dp))
+//
+//            // Edit button
+//            Box(
+//                modifier = Modifier
+//                    .clip(RoundedCornerShape(10.dp))
+//                    .background(YellowAccent)
+//                    .clickable { }
+//                    .padding(horizontal = 18.dp, vertical = 8.dp)
+//            ) {
+//                Text("Edit Profile", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color(0xFF1A3A0F))
+//            }
         }
     }
 }

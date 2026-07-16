@@ -2,10 +2,9 @@ package com.tech.cropify.viewModel
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.tech.cropify.model.LoginResponse
+import com.tech.cropify.model.login.LoginResponse
 import com.tech.cropify.repository.LoginRepository
 import com.tech.cropify.util.SharedPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +39,6 @@ class LoginViewModel @Inject constructor(
                         _token.value = response.token
                         SharedPreferenceManager.saveToken(context = context, token = response.token)
                         StateHolder.accessToken?.text = response.token
-                        AuthState.LoginSuccess
                         Log.d(TAG,"Success access token: ${response.token}")
                     },
                     onFailure = {

@@ -2,16 +2,16 @@ package com.tech.cropify.repository
 
 import android.content.Context
 import android.util.Log
-import com.tech.cropify.model.GoogleLoginRequest
+import com.tech.cropify.model.login.AuthRequest
+import com.tech.cropify.model.login.GoogleLoginRequest
 import com.tech.cropify.network.ApiInterface
-import com.tech.cropify.model.LoginBody
-import com.tech.cropify.model.LoginResponse
-import com.tech.cropify.model.RegisterBody
-import com.tech.cropify.model.RegisterResponse
+import com.tech.cropify.model.login.LoginBody
+import com.tech.cropify.model.login.LoginResponse
+import com.tech.cropify.model.login.RegisterBody
+import com.tech.cropify.model.login.RegisterResponse
 import com.tech.cropify.util.SharedPreferenceManager
 import javax.inject.Inject
 import javax.inject.Named
-
 
 class LoginRepository @Inject constructor(
     @Named("backendApiService") val api: ApiInterface

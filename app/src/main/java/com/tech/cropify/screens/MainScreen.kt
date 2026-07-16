@@ -2,6 +2,9 @@ package com.tech.cropify.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,37 +14,37 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,13 +56,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.tech.cropify.navigation.Routes
+import com.tech.cropify.ui.theme.AppColors
 import com.tech.cropify.viewModel.LoginViewModel
+import com.tech.cropify.viewModel.ProfileViewModel
 
 private val PrimaryBlue = Color(0xFF274185)
 private val AccentOrange = Color(0xFFF47920)
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun MainScreen(navController: NavHostController) {
+fun MainScreen(navController: NavHostController, profileViewModel: ProfileViewModel) {
 
     val bottomNavController = rememberNavController()
     var isBottomBarVisible by remember { mutableStateOf(true) }
@@ -79,7 +84,7 @@ fun MainScreen(navController: NavHostController) {
                     }
                 ) { type ->
                     when (type) {
-                        BottomBarType.DASHBOARD, BottomBarType.CROP, BottomBarType.DISEASE, BottomBarType.SOIL->
+                        BottomBarType.DASHBOARD, BottomBarType.CROP, BottomBarType.DISEASE->
                             BottomNavigationBar(
                                 isDarkTheme,
                                 navController = bottomNavController,
@@ -107,14 +112,14 @@ fun MainScreen(navController: NavHostController) {
                                         restoreState = true
                                     }
                                 },
-                                onSoilClick = {
-                                    bottomBarType = BottomBarType.SOIL
-                                    bottomNavController.navigate(BottomNavItem.Soil.route) {
-                                        popUpTo(BottomNavItem.Home.route) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                }
+//                                onSoilClick = {
+//                                    bottomBarType = BottomBarType.SOIL
+//                                    bottomNavController.navigate(BottomNavItem.Soil.route) {
+//                                        popUpTo(BottomNavItem.Home.route) { saveState = true }
+//                                        launchSingleTop = true
+//                                        restoreState = true
+//                                    }
+//                                }
                             )
                     }
                 }
@@ -128,23 +133,23 @@ fun MainScreen(navController: NavHostController) {
             modifier = Modifier.padding(padding),
         ) {
             composable(BottomNavItem.Home.route) {
-                DashboardScreen(navController)
+                DashboardScreen(navController,bottomNavController, profileViewModel)
             }
             composable(BottomNavItem.Crop.route) {
-                CropScreen(navController)
+                CropScreen(navController, bottomNavController)
             }
             composable(BottomNavItem.Disease.route) {
-                DiseaseScreen(navController)
+                DiseaseScreen(navController, bottomNavController)
             }
-            composable(BottomNavItem.Soil.route) {
-                SoilScreen(navController)
-            }
+//            composable(BottomNavItem.Soil.route) {
+//                SoilScreen(navController, bottomNavController)
+//            }
             // Keep type-safe routes for screens not in bottom nav
             composable<Routes.Weather> {
                 WeatherScreen(navController)
             }
             composable<Routes.Profile> {
-                Profile(navController, viewModel)
+                Profile(navController, viewModel, profileViewModel)
             }
         }
     }
@@ -213,23 +218,30 @@ fun BottomNavigationBar(
     onDashBoardClick: () -> Unit,
     onCropClick: () -> Unit,
     onDiseaseClick: () -> Unit,
-    onSoilClick: () -> Unit,
+//    onSoilClick: () -> Unit,
 ) {
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Crop,
         BottomNavItem.Disease,
-        BottomNavItem.Soil
+//        BottomNavItem.Soil
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination?.route
-    val borderColor = if (isDarkTheme) Color.DarkGray else Color.LightGray
+    val selectedIndex = items
+        .indexOfFirst { currentDestination?.startsWith(it.route) == true }
+        .coerceAtLeast(0)
 
-    Box(
-        Modifier
+    val containerColor = if (isDarkTheme) AppColors.DarkSurface else Color.White
+    val borderColor = if (isDarkTheme) AppColors.DarkBorder else AppColors.CardBorder
+
+    BoxWithConstraints(
+        modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp)
+            .height(78.dp)
+            .shadow(elevation = 10.dp, spotColor = AppColors.DarkGreen.copy(alpha = 0.15f))
+            .background(containerColor)
             .drawBehind {
                 drawLine(
                     color = borderColor,
@@ -239,42 +251,48 @@ fun BottomNavigationBar(
                 )
             }
     ) {
-        NavigationBar(
-            containerColor = if (isDarkTheme) AlertDialogDefaults.containerColor else Color.White,
-            modifier = Modifier.fillMaxSize()
+        val itemWidth = maxWidth / items.size
+        val markerWidth = 48.dp
+        val indicatorOffset by animateDpAsState(
+            targetValue = itemWidth * selectedIndex + (itemWidth - markerWidth) / 2,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "indicatorOffset"
+        )
+
+        // Small marker pinned to the top edge of the selected tab
+        Box(
+            modifier = Modifier
+                .offset(x = indicatorOffset, y = 0.dp)
+                .width(markerWidth)
+                .height(3.dp)
+                .clip(RoundedCornerShape(bottomStart = 3.dp, bottomEnd = 3.dp))
+                .background(AppColors.AccentGreen)
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 3.dp)
         ) {
-            items.forEachIndexed { index, item ->
-                NavigationBarItem(
-                    isDarkTheme,
-                    selected = currentDestination?.startsWith(item.route) == true,
+            items.forEach { item ->
+                val selected = item == items[selectedIndex]
+                BottomNavTab(
+                    item = item,
+                    selected = selected,
+                    isDarkTheme = isDarkTheme,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
                     onClick = {
                         when (item) {
                             BottomNavItem.Home -> onDashBoardClick()
                             BottomNavItem.Crop -> onCropClick()
                             BottomNavItem.Disease -> onDiseaseClick()
-                            BottomNavItem.Soil -> onSoilClick()
+//                            BottomNavItem.Soil -> onSoilClick()
                         }
-                    },
-                    icon = { selected, activeColor, inactiveColor ->
-//                        Icon(
-//                            painter = painterResource(id = item.icon),
-//                            contentDescription = item.title,
-//                            modifier = Modifier
-//                                .size(23.dp)
-//                                .padding(top = 6.dp),
-//                            tint = if (selected) activeColor else inactiveColor
-//                        )
-
-                        Text(item.icon, fontSize = 19.sp)
-                    },
-                    label = { selected, activeColor, inactiveColor ->
-                        Text(
-                            text = item.title,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = if (selected) activeColor else Color(0xFF888888)
-                        )
                     }
                 )
             }
@@ -282,64 +300,123 @@ fun BottomNavigationBar(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RowScope.NavigationBarItem(
-    isDarkTheme: Boolean,
+private fun BottomNavTab(
+    item: BottomNavItem,
     selected: Boolean,
-    onClick: () -> Unit,
-    icon: @Composable (selected: Boolean, active: Color, inActive: Color) -> Unit,
+    isDarkTheme: Boolean,
     modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    label: @Composable ((selected: Boolean, active: Color, inActive: Color) -> Unit)? = null,
-    activeColor: Color = MaterialTheme.colorScheme.primary,
-    inactiveColor: Color = Color.Unspecified,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+    onClick: () -> Unit
 ) {
-    var itemWidth by remember { mutableStateOf(0) }
-    val scope = rememberCoroutineScope()
-    var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val liftOffset by animateDpAsState(
+        targetValue = if (selected) (-6).dp else 0.dp,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "liftOffset"
+    )
+
+    val contentColor = when {
+        selected -> AppColors.AccentGreen
+        isDarkTheme -> AppColors.DarkTextMuted
+        else -> AppColors.TextMuted
+    }
 
     Column(
-        modifier
+        modifier = modifier
             .selectable(
                 selected = selected,
                 onClick = onClick,
-                enabled = enabled,
                 role = Role.Tab,
                 interactionSource = interactionSource,
-                indication = null,
-            )
-            .weight(1f)
-            .onSizeChanged { itemWidth = it.width },
+                indication = null
+            ),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(color = if (selected) activeColor else inactiveColor)
+        Text(
+            text = item.icon,
+            fontSize = 20.sp,
+            modifier = Modifier.graphicsLayer {
+                translationY = liftOffset.toPx()
+            }
         )
-
-        Box(
-            Modifier
-                .weight(1f)
-                .size(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            icon.invoke(
-                selected,
-                activeColor,
-                if (isDarkTheme) Color.White else Color(0xFF888888)
-            )
-        }
-
-        label?.invoke(selected, activeColor, inactiveColor)
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = item.title,
+            fontSize = 11.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = contentColor,
+            modifier = Modifier.graphicsLayer {
+                translationY = liftOffset.toPx()
+            }
+        )
     }
 }
+
+//@OptIn(ExperimentalMaterial3Api::class)
+//@Composable
+//fun RowScope.NavigationBarItem(
+//    isDarkTheme: Boolean,
+//    selected: Boolean,
+//    onClick: () -> Unit,
+//    icon: @Composable (selected: Boolean, active: Color, inActive: Color) -> Unit,
+//    modifier: Modifier = Modifier,
+//    enabled: Boolean = true,
+//    label: @Composable ((selected: Boolean, active: Color, inActive: Color) -> Unit)? = null,
+//    activeColor: Color = MaterialTheme.colorScheme.primary,
+//    inactiveColor: Color = Color.Unspecified,
+//    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+//) {
+//    var itemWidth by remember { mutableStateOf(0) }
+//    val scope = rememberCoroutineScope()
+//    var isBottomSheetVisible by rememberSaveable { mutableStateOf(false) }
+//    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+//
+//    Column(
+//        modifier
+//            .selectable(
+//                selected = selected,
+//                onClick = onClick,
+//                enabled = enabled,
+//                role = Role.Tab,
+//                interactionSource = interactionSource,
+//                indication = null,
+//            )
+//            .weight(1f)
+//            .onSizeChanged { itemWidth = it.width },
+//        verticalArrangement = Arrangement.Center,
+//        horizontalAlignment = Alignment.CenterHorizontally,
+//    ) {
+//        Spacer(
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .height(1.dp)
+//                .background(color = if (selected) activeColor else inactiveColor)
+//        )
+//
+//        Box(
+//            Modifier
+//                .weight(1f)
+//                .size(24.dp),
+//            contentAlignment = Alignment.Center
+//        ) {
+//            icon.invoke(
+//                selected,
+//                activeColor,
+//                if (isDarkTheme) Color.White else Color(0xFF888888)
+//            )
+//        }
+//
+//        label?.invoke(selected, activeColor, inactiveColor)
+//        Spacer(modifier = Modifier.height(8.dp))
+//    }
+//}
 
 sealed class BottomNavItem(
     val title: String,
@@ -349,9 +426,9 @@ sealed class BottomNavItem(
     object Home : BottomNavItem("Home", "home", "🏠" )
     object Crop : BottomNavItem("Crop", "crop", "🌾" )
     object Disease : BottomNavItem("Disease", "disease", "🔬")
-    object Soil : BottomNavItem("Soil", "soil", "🏔")
+//    object Soil : BottomNavItem("Soil", "soil", "🏔")
 }
 
 enum class BottomBarType{
-    DASHBOARD, CROP, DISEASE, SOIL
+    DASHBOARD, CROP, DISEASE
 }

@@ -127,5 +127,6 @@ dependencies {
     implementation( libs.androidx.credentials.play.services.auth)
     implementation (libs.googleid)
     implementation(libs.play.services.location)
+    implementation(libs.play.services.location.v2140)
 
 }

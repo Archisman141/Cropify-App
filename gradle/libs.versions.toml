@@ -23,6 +23,7 @@ navigationRuntimeKtx = "2.9.7"
 playServicesAuth = "21.6.0"
 googleid = "1.2.0"
 playServicesLocation = "21.3.0"
+playServicesLocationVersion = "21.4.0"
 runtime = "1.11.2"
 material = "1.8.1"
 pagingCompose = "3.5.0"
@@ -85,6 +86,7 @@ androidx-credentials = { module = "androidx.credentials:credentials", version.re
 androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 play-services-location = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocation" }
 androidx-compose-ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
+play-services-location-v2140 = { module = "com.google.android.gms:play-services-location", version.ref = "playServicesLocationVersion" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

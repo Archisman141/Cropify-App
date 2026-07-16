@@ -18,6 +18,22 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.tech.cropify.util.ThemeMode
 
+object AppColors {
+    val DarkGreen    = Color(0xFF1E4010)
+    val MedGreen     = Color(0xFF3A7A20)
+    val AccentGreen  = Color(0xFF4A8A30)
+    val YellowAccent = Color(0xFFF5C842)
+    val BgCream      = Color(0xFFF0EBE0)
+    val CardBorder   = Color(0xFFE0D8C8)
+    val TextDark     = Color(0xFF2A2010)
+    val TextMuted    = Color(0xFF8A7A5A)
+
+    // Dark theme variants
+    val DarkSurface     = Color(0xFF16240E)
+    val DarkBorder      = Color(0xFF2E4A1E)
+    val DarkTextMuted   = Color(0xFF9BAE8C)
+}
+
 object CropifyColors {
     val ForestGreen  = Color(0xFF1B3A2D)
     val Amber        = Color(0xFFC8A535)

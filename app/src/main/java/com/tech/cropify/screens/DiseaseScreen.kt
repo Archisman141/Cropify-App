@@ -47,7 +47,7 @@ private val RemedyBrown     = Color(0xFF3A2A10)
 private val TipLabelBrown   = Color(0xFF5A4A2E)
 
 @Composable
-fun DiseaseScreen(navController: NavHostController) {
+fun DiseaseScreen(navController: NavHostController, bottomNavController: NavHostController) {
 
     // State
     var selectedPart by remember { mutableStateOf("Leaf") }

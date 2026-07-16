@@ -87,7 +87,7 @@ private val fields = listOf(
 // ─────────────────────────────────────────────────────────────────────────────
 @SuppressLint("Range")
 @Composable
-fun SoilScreen(navController: NavHostController) {
+fun SoilScreen(navController: NavHostController, bottomNavController: NavHostController) {
 
     var selectedField by remember { mutableStateOf(0) }
 

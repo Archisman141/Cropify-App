@@ -7,6 +7,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,14 +16,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.tech.cropify.model.prediction.Prediction
+import com.tech.cropify.model.prediction.PredictionBody
+import com.tech.cropify.viewModel.PredictionViewModel
 
-// ── Brand colours (shared constants ideally in a Theme file) ──────────────────
+// ── Brand colours ──────────────────────────────────────────────────────────
 private val DarkGreen    = Color(0xFF1E4010)
 private val MedGreen     = Color(0xFF2D5E1A)
 private val AccentGreen  = Color(0xFF4A8A30)
@@ -32,6 +40,8 @@ private val CardBorder   = Color(0xFFE0D8C8)
 private val TextDark     = Color(0xFF2A2010)
 private val TextMuted    = Color(0xFF8A7A5A)
 private val BoxBg        = Color(0xFFF5F0E8)
+private val ErrorRed     = Color(0xFFB3261E)
+private val ErrorBg      = Color(0xFFFCEAEA)
 
 data class CropOption(val icon: String, val name: String)
 
@@ -46,27 +56,29 @@ private val crops = listOf(
     CropOption("🥜", "Groundnut"),
 )
 
+private val indianStates = listOf(
+    "Andhra Pradesh", "Assam", "Bihar", "Chhattisgarh", "Gujarat", "Haryana",
+    "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Odisha", "Punjab",
+    "Rajasthan", "Tamil Nadu", "Telangana", "Uttar Pradesh", "West Bengal"
+)
+
 @Composable
-fun CropScreen(navController: NavHostController) {
+fun CropScreen(
+    navController: NavHostController,
+    bottomNavController: NavHostController,
+    viewModel: PredictionViewModel = hiltViewModel()
+) {
+    var selectedCrop  by remember { mutableStateOf("Rice") }
+    var selectedState by remember { mutableStateOf("West Bengal") }
+    var areaHectare   by remember { mutableStateOf(12f) }
+    var fertilizer    by remember { mutableStateOf(10f) }
+    var pesticide     by remember { mutableStateOf(10f) }
+    var rainfall      by remember { mutableStateOf(10f) }
 
-    var nitrogen       by remember { mutableStateOf(142f) }
-    var phosphorus     by remember { mutableStateOf(48f) }
-    var potassium      by remember { mutableStateOf(198f) }
-    var ph             by remember { mutableStateOf(6.8f) }
-    var organicCarbon  by remember { mutableStateOf(0.72f) }
-    var sulphur        by remember { mutableStateOf(12f) }
-    var temperature    by remember { mutableStateOf(26f) }
-    var rainfall       by remember { mutableStateOf(180f) }
-    var humidity       by remember { mutableStateOf(72f) }
-    var moisture       by remember { mutableStateOf(34f) }
-
-    var selectedCrop   by remember { mutableStateOf("Maize") }
-    var showResult     by remember { mutableStateOf(false) }
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        topBar = {
-            CropTopBar(navController)
-        },
+        topBar = { CropTopBar(navController) },
         containerColor = BgCream
     ) { innerPadding ->
         Column(
@@ -75,11 +87,10 @@ fun CropScreen(navController: NavHostController) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // ── Page Hero ─────────────────────────────────────────────────────
             PageHeroHeader(
                 icon = "🌾",
                 title = "Smart Crop Prediction",
-                subtitle = "Select crop & enter soil ingredients for AI prediction"
+                subtitle = "Enter your field details for an AI yield prediction"
             )
 
             Column(modifier = Modifier.padding(14.dp)) {
@@ -95,7 +106,7 @@ fun CropScreen(navController: NavHostController) {
                         crops.forEach { crop ->
                             CropChip(crop, selected = selectedCrop == crop.name) {
                                 selectedCrop = crop.name
-                                showResult = false
+                                viewModel.clearResult()
                             }
                         }
                     }
@@ -103,39 +114,27 @@ fun CropScreen(navController: NavHostController) {
 
                 Spacer(Modifier.height(12.dp))
 
-                // ── Step 2: Soil Ingredients ──────────────────────────────────
+                // ── Step 2: State ────────────────────────────────────────────
                 FarmCard {
-                    SectionLabel("② Soil Ingredients (NPK & More)")
+                    SectionLabel("② Select Your State")
                     Spacer(Modifier.height(11.dp))
-                    // 2-column grid
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            IngredientBox("Nitrogen (N)", nitrogen, "kg/ha") { nitrogen = it }
-                            IngredientBox("Potassium (K)", potassium, "kg/ha", range = 0f..300f) { potassium = it }
-                            IngredientBox("Organic Carbon", organicCarbon, "%", range = 0.1f..3f, steps = 100) { organicCarbon = it }
-                        }
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            IngredientBox("Phosphorus (P)", phosphorus, "kg/ha", range = 0f..200f) { phosphorus = it }
-                            IngredientBox("Soil pH", ph, "pH level", range = 4f..9f, steps = 100) { ph = it }
-                            IngredientBox("Sulphur (S)", sulphur, "ppm", range = 0f..60f) { sulphur = it }
-                        }
-                    }
+                    StateDropdown(selectedState) { selectedState = it }
                 }
 
                 Spacer(Modifier.height(12.dp))
 
-                // ── Step 3: Climate & Field ───────────────────────────────────
+                // ── Step 3: Field Details ─────────────────────────────────────
                 FarmCard {
-                    SectionLabel("③ Climate & Field Details")
+                    SectionLabel("③ Field & Input Details")
                     Spacer(Modifier.height(11.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            IngredientBox("Temperature", temperature, "°C", range = 10f..45f) { temperature = it }
-                            IngredientBox("Humidity", humidity, "%", range = 20f..100f) { humidity = it }
+                            IngredientBox("Farm Area", areaHectare, "hectare", range = 0.5f..50f, steps = 98) { areaHectare = it }
+                            IngredientBox("Fertilizer Used", fertilizer, "kg/ha", range = 0f..300f) { fertilizer = it }
                         }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            IngredientBox("Rainfall", rainfall, "mm", range = 20f..400f) { rainfall = it }
-                            IngredientBox("Soil Moisture", moisture, "%", range = 5f..80f) { moisture = it }
+                            IngredientBox("Rainfall", rainfall, "mm", range = 0f..2000f) { rainfall = it }
+                            IngredientBox("Pesticide Used", pesticide, "kg/ha", range = 0f..50f, steps = 100) { pesticide = it }
                         }
                     }
                 }
@@ -144,14 +143,24 @@ fun CropScreen(navController: NavHostController) {
 
                 // ── Predict Button ────────────────────────────────────────────
                 Button(
-                    onClick = { showResult = true },
+                    onClick = {
+                        viewModel.getPrediction(
+                            PredictionBody(
+                                state = selectedState,
+                                crop = selectedCrop,
+                                area = areaHectare.toString(),
+                                fertilizer = fertilizer.toString(),
+                                pesticide = pesticide.toString(),
+                                rainfall = rainfall.toString()
+                            )
+                        )
+                    },
+                    enabled = !uiState.isLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp),
                     shape = RoundedCornerShape(13.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Transparent
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                     contentPadding = PaddingValues(0.dp)
                 ) {
                     Box(
@@ -163,19 +172,40 @@ fun CropScreen(navController: NavHostController) {
                             ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            "🤖  Run AI Prediction",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.White
-                        )
+                        if (uiState.isLoading) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    strokeWidth = 2.dp,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Text("Analysing…", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                            }
+                        } else {
+                            Text("🤖  Run AI Prediction", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                        }
+                    }
+                }
+
+                // ── Error state ──────────────────────────────────────────────
+                uiState.error?.let { message ->
+                    Spacer(Modifier.height(12.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(11.dp))
+                            .background(ErrorBg)
+                            .border(1.dp, Color(0xFFE8B4B0), RoundedCornerShape(11.dp))
+                            .padding(12.dp)
+                    ) {
+                        Text("⚠️ $message", fontSize = 13.sp, color = ErrorRed)
                     }
                 }
 
                 // ── Result Card ───────────────────────────────────────────────
-                if (showResult) {
+                uiState.result?.let { result ->
                     Spacer(Modifier.height(12.dp))
-                    CropResultCard(selectedCrop)
+                    CropResultCard(selectedCrop, result)
                 }
             }
 
@@ -204,7 +234,6 @@ fun CropTopBar(navController: NavHostController) {
     }
 }
 
-// ── Page hero (green gradient banner at top of each feature screen) ───────────
 @Composable
 fun PageHeroHeader(icon: String, title: String, subtitle: String) {
     Box(
@@ -224,19 +253,11 @@ fun PageHeroHeader(icon: String, title: String, subtitle: String) {
     }
 }
 
-// ── Section label ─────────────────────────────────────────────────────────────
-@Composable
-fun SectionLabel(text: String) {
-    Text(
-        text.uppercase(),
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        color = TextMuted,
-        letterSpacing = 0.5.sp
-    )
-}
+//@Composable
+//fun SectionLabel(text: String) {
+//    Text(text.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextMuted, letterSpacing = 0.5.sp)
+//}
 
-// ── White rounded card ────────────────────────────────────────────────────────
 @Composable
 fun FarmCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
@@ -250,17 +271,12 @@ fun FarmCard(content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
-// ── Crop chip (scrollable selector) ──────────────────────────────────────────
 @Composable
 private fun CropChip(crop: CropOption, selected: Boolean, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(13.dp))
-            .border(
-                2.dp,
-                if (selected) AccentGreen else CardBorder,
-                RoundedCornerShape(13.dp)
-            )
+            .border(2.dp, if (selected) AccentGreen else CardBorder, RoundedCornerShape(13.dp))
             .background(if (selected) Color(0xFFE8F5E1) else Color.White)
             .clickable(onClick = onClick)
             .padding(vertical = 10.dp, horizontal = 8.dp)
@@ -276,6 +292,38 @@ private fun CropChip(crop: CropOption, selected: Boolean, onClick: () -> Unit) {
             color = if (selected) MedGreen else Color(0xFF4A3A1E),
             textAlign = TextAlign.Center
         )
+    }
+}
+
+// ── State dropdown ───────────────────────────────────────────────────────────
+@Composable
+private fun StateDropdown(selected: String, onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(11.dp))
+                .background(BoxBg)
+                .clickable { expanded = true }
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(selected, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextDark)
+            Text("▾", fontSize = 14.sp, color = MedGreen)
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            indianStates.forEach { state ->
+                DropdownMenuItem(
+                    text = { Text(state) },
+                    onClick = {
+                        onSelect(state)
+                        expanded = false
+                    }
+                )
+            }
+        }
     }
 }
 
@@ -320,88 +368,103 @@ private fun IngredientBox(
     }
 }
 
-// ── Prediction result card ────────────────────────────────────────────────────
+// ── Prediction result card — bound to real API response ──────────────────────
 @Composable
-private fun CropResultCard(cropName: String) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(15.dp))
-            .background(Brush.linearGradient(listOf(Color(0xFFE8F5E1), Color(0xFFD4F0B0))))
-            .border(1.dp, Color(0xFFB0D890), RoundedCornerShape(15.dp))
-            .padding(18.dp)
-    ) {
-        Column {
-            Text("🎯  AI Prediction Result", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF3A6B2E))
-            Spacer(Modifier.height(9.dp))
+private fun CropResultCard(cropName: String, result: Prediction) {
+    Column {
+        // ── Prediction vs Optimized summary ─────────────────────────────────
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(15.dp))
+                .background(Brush.linearGradient(listOf(Color(0xFFE8F5E1), Color(0xFFD4F0B0))))
+                .border(1.dp, Color(0xFFB0D890), RoundedCornerShape(15.dp))
+                .padding(18.dp)
+        ) {
+            Column {
+                Text("🎯  AI Prediction Result", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF3A6B2E))
+                Spacer(Modifier.height(9.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("🌽", fontSize = 44.sp)
-                Column {
-                    Text(cropName, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A4010))
-                    Text("Suitability Score: 91% · Highly Recommended", fontSize = 13.sp, color = Color(0xFF4A7A30))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("🌽", fontSize = 44.sp)
+                    Column {
+                        Text(cropName, fontFamily = FontFamily.Serif, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF1A4010))
+                        Text(
+                            "Predicted Yield: %.2f t/ha".format(result.prediction.predicted_yield_ton_per_hectare),
+                            fontSize = 13.sp,
+                            color = Color(0xFF4A7A30)
+                        )
+                    }
                 }
-            }
 
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                ResultPill("✅ Soil Match: Excellent")
-                ResultPill("🌧️ Rainfall: Adequate")
-                ResultPill("🌡️ Temp: Ideal")
-            }
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ResultBreakdown(
+                        "%.2f t/ha".format(result.prediction.predicted_yield_ton_per_hectare),
+                        "Predicted Yield",
+                        Modifier.weight(1f)
+                    )
+                    ResultBreakdown(
+                        "%.2f t".format(result.prediction.total_production_ton),
+                        "Total Production",
+                        Modifier.weight(1f)
+                    )
+                }
 
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                ResultBreakdown("4.2t", "Est. Yield/acre", Modifier.weight(1f))
-                ResultBreakdown("₹85K", "Revenue Est.", Modifier.weight(1f))
-                ResultBreakdown("90 days", "Duration", Modifier.weight(1f))
-            }
-
-            Spacer(Modifier.height(10.dp))
-            // Sowing timeline
-            Card(
-                shape = RoundedCornerShape(13.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(0.dp)
-            ) {
-                Column(modifier = Modifier.padding(13.dp)) {
-                    Text("📅 Recommended Sowing Timeline", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF4A3A1E))
-                    Spacer(Modifier.height(10.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        TimelineStep("Jun", "Sow")
-                        TimelineLine()
-                        TimelineStep("Jul", "Fertilise")
-                        TimelineLine()
-                        TimelineStep("Aug", "Irrigate")
-                        TimelineLine()
-                        TimelineStep("Sep", "Harvest")
+                Spacer(Modifier.height(10.dp))
+                // ── Optimization card ──────────────────────────────────────
+                Card(
+                    shape = RoundedCornerShape(13.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(0.dp)
+                ) {
+                    Column(modifier = Modifier.padding(13.dp)) {
+                        Text("📈 If You Optimize Inputs", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color(0xFF4A3A1E))
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ResultBreakdown(
+                                "%.2f t/ha".format(result.optimization.optimized_yield_ton_per_hectare),
+                                "Optimized Yield",
+                                Modifier.weight(1f)
+                            )
+                            ResultBreakdown(
+                                "%.2f t".format(result.optimization.optimized_total_production),
+                                "Optimized Total",
+                                Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                            ResultPill("🧪 Fert: %.1f kg/ha".format(result.optimization.recommended_fert_kg_ha))
+                            ResultPill("🐛 Pest: %.1f kg/ha".format(result.optimization.recommended_pest_kg_ha))
+                        }
                     }
                 }
             }
-
-            Spacer(Modifier.height(10.dp))
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color(0xFFFFF3CD))
-                    .padding(10.dp)
-            ) {
-                Text(
-                    "⚠️ Phosphorus is slightly low. Apply DAP @ 50 kg/acre before sowing for best yield.",
-                    fontSize = 12.sp,
-                    color = Color(0xFF7A5A10)
-                )
-            }
-
-            Spacer(Modifier.height(10.dp))
-            Button(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth().height(44.dp),
-                shape = RoundedCornerShape(11.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MedGreen)
-            ) { Text("📄 Save Report", fontSize = 13.sp, color = Color.White) }
         }
+
+        // ── AI Advice card ───────────────────────────────────────────────────
+        Spacer(Modifier.height(12.dp))
+        Card(
+            shape = RoundedCornerShape(15.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White),
+            border = androidx.compose.foundation.BorderStroke(1.dp, CardBorder),
+            elevation = CardDefaults.cardElevation(0.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("🧑‍🌾 AI Farm Advisory", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MedGreen)
+                Spacer(Modifier.height(10.dp))
+                AdviceMarkdownText(result.ai_advice )
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+        Button(
+            onClick = {},
+            modifier = Modifier.fillMaxWidth().height(44.dp),
+            shape = RoundedCornerShape(11.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MedGreen)
+        ) { Text("📄 Save Report", fontSize = 13.sp, color = Color.White) }
     }
 }
 
@@ -421,38 +484,68 @@ private fun ResultBreakdown(value: String, label: String, modifier: Modifier = M
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(Color.White)
+            .background(BoxBg)
             .padding(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MedGreen)
+        Text(value, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MedGreen)
         Spacer(Modifier.height(2.dp))
         Text(label, fontSize = 10.sp, color = TextMuted, textAlign = TextAlign.Center)
     }
 }
 
+// ── Lightweight markdown renderer for ai_advice ──────────────────────────────
+// Handles **bold**, "*  " / "-  " bullets, and blank-line paragraph breaks.
+// Good enough for the backend's formatting without pulling in a markdown library.
 @Composable
-private fun RowScope.TimelineStep(month: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(
-            modifier = Modifier
-                .size(12.dp)
-                .clip(RoundedCornerShape(6.dp))
-                .background(AccentGreen)
-        )
-        Spacer(Modifier.height(5.dp))
-        Text(month, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = MedGreen)
-        Text(label, fontSize = 10.sp, color = Color(0xFF5A4A2E))
+private fun AdviceMarkdownText(raw: String) {
+    val lines = raw.split("\n")
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        lines.forEach { rawLine ->
+            val line = rawLine.trim()
+            if (line.isEmpty()) {
+                Spacer(Modifier.height(4.dp))
+                return@forEach
+            }
+            val isBullet = line.startsWith("*") || line.startsWith("-") || line.startsWith("⭐")
+            val cleaned = when {
+                line.startsWith("*   ") -> line.removePrefix("*   ")
+                line.startsWith("* ") -> line.removePrefix("* ")
+                line.startsWith("- ") -> line.removePrefix("- ")
+                else -> line
+            }
+            Row {
+                if (isBullet) {
+                    Text("•  ", fontSize = 13.sp, color = MedGreen)
+                }
+                Text(
+                    text = boldAnnotatedString(cleaned),
+                    fontSize = 13.sp,
+                    color = TextDark,
+                    lineHeight = 19.sp
+                )
+            }
+        }
     }
 }
 
-@Composable
-private fun RowScope.TimelineLine() {
-    Box(
-        modifier = Modifier
-            .weight(1f)
-            .height(2.dp)
-            .background(Color(0xFFC0D8A0))
-            .padding(bottom = 17.dp)
-    )
+private fun boldAnnotatedString(text: String) = buildAnnotatedString {
+    var remaining = text
+    while (true) {
+        val start = remaining.indexOf("**")
+        if (start == -1) {
+            append(remaining)
+            break
+        }
+        val end = remaining.indexOf("**", start + 2)
+        if (end == -1) {
+            append(remaining)
+            break
+        }
+        append(remaining.substring(0, start))
+        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = MedGreen)) {
+            append(remaining.substring(start + 2, end))
+        }
+        remaining = remaining.substring(end + 2)
+    }
 }

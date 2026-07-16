@@ -35,4 +35,7 @@ sealed class Routes {
 
     @Serializable
     data object NotificationScreen: Routes()
+
+    @Serializable
+    data object EditProfile : Routes()
 }

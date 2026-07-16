@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,8 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.tech.cropify.navigation.Routes
+import com.tech.cropify.viewModel.ProfileViewModel
 
 // ─── Brand colours ────────────────────────────────────────────────────────────
 private val DarkGreen    = Color(0xFF1E4010)
@@ -36,7 +41,13 @@ private val AlertYellow  = Color(0xFFFFF3CD)
 private val AlertBorder  = Color(0xFFF5C842)
 
 @Composable
-fun DashboardScreen(navController: NavController) {
+fun DashboardScreen(
+    navController: NavController,
+    bottomNavController: NavHostController,
+    profileViewModel: ProfileViewModel
+) {
+    val profile by profileViewModel.profile.collectAsState()
+
     Scaffold(
         topBar = { DashboardTopBar(navController) },
         containerColor = BgCream
@@ -50,7 +61,7 @@ fun DashboardScreen(navController: NavController) {
         )
         {
             item {
-                DashboardHeader(navController)
+                DashboardHeader(navController, bottomNavController)
             }
 
             item {
@@ -84,7 +95,7 @@ fun DashboardScreen(navController: NavController) {
                         letterSpacing = 0.5.sp,
                         modifier = Modifier.padding(bottom = 9.dp)
                     )
-                    QuickActionsGrid(navController)
+                    QuickActionsGrid(navController, bottomNavController)
 
                     Spacer(Modifier.height(13.dp))
 
@@ -154,7 +165,7 @@ private fun DashboardTopBar(navController: NavController) {
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("🌤️", fontSize = 19.sp, modifier = Modifier.clickable { navController.navigate(Routes.Weather) })
+//            Text("🌤️", fontSize = 19.sp, modifier = Modifier.clickable { navController.navigate(Routes.Weather) })
             Text("🔔", fontSize = 19.sp)
             Box(
                 modifier = Modifier
@@ -172,7 +183,7 @@ private fun DashboardTopBar(navController: NavController) {
 
 // ── Green Dashboard Header with name + weather ────────────────────────────────
 @Composable
-private fun DashboardHeader(navController: NavController) {
+private fun DashboardHeader(navController: NavController, bottomNavController: NavHostController) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -218,20 +229,37 @@ private fun DashboardHeader(navController: NavController) {
 
 // ── 2×2 Quick Actions Grid ────────────────────────────────────────────────────
 @Composable
-private fun QuickActionsGrid(navController: NavController) {
+private fun QuickActionsGrid(navController: NavController, bottomNavController: NavHostController) {
+    data class QuickAction(val icon: String, val title: String, val desc: String, val onClick: () -> Unit)
+
     val actions = listOf(
-        Triple("🌾", "Crop Predict", "Best crop for season") to Routes.Crop,
-        Triple("🔬", "Detect Disease", "Scan plant leaves") to Routes.Disease,
-        Triple("🏔️", "Soil Analysis", "Soil health report") to Routes.Soil,
-        Triple("🌦️", "Weather", "7-day forecast") to Routes.Weather
+        QuickAction("🌾", "Crop Predict", "Best crop for season") {
+            bottomNavController.navigate(BottomNavItem.Crop.route) {
+                popUpTo(BottomNavItem.Home.route) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        },
+        QuickAction("🔬", "Detect Disease", "Scan plant leaves") {
+            bottomNavController.navigate(BottomNavItem.Disease.route) {
+                popUpTo(BottomNavItem.Home.route) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        },
+//        QuickAction("🏔️", "Soil Analysis", "Soil health report") {
+//            navController.navigate(Routes.Soil) // outer navController, since it's registered there
+//        },
+//        QuickAction("🌦️", "Weather", "7-day forecast") {
+//            navController.navigate(Routes.Weather) // outer navController, same as top bar
+//        }
     )
+
     Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
         for (row in actions.chunked(2)) {
             Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                for ((info, route) in row) {
-                    ActionCard(info.first, info.second, info.third, Modifier.weight(1f)) {
-                        navController.navigate(route)
-                    }
+                for (action in row) {
+                    ActionCard(action.icon, action.title, action.desc, Modifier.weight(1f), action.onClick)
                 }
             }
         }

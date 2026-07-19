@@ -136,7 +136,7 @@ fun MainScreen(navController: NavHostController, profileViewModel: ProfileViewMo
                 DashboardScreen(navController,bottomNavController, profileViewModel)
             }
             composable(BottomNavItem.Crop.route) {
-                CropScreen(navController, bottomNavController)
+                CropScreen()
             }
             composable(BottomNavItem.Disease.route) {
                 DiseaseScreen(navController, bottomNavController)

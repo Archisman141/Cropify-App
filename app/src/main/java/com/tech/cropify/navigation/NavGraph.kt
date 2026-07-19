@@ -5,7 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresExtension
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -20,6 +20,7 @@ import com.tech.cropify.screens.MainScreen
 import com.tech.cropify.screens.NotificationScreen
 import com.tech.cropify.screens.Profile
 import com.tech.cropify.screens.SoilScreen
+import com.tech.cropify.screens.SplashScreen
 import com.tech.cropify.screens.WeatherScreen
 import com.tech.cropify.viewModel.LoginViewModel
 import com.tech.cropify.viewModel.ProfileViewModel
@@ -30,9 +31,9 @@ import com.tech.cropify.viewModel.ProfileViewModel
 fun NavGraphs(
     scrollState: LazyListState,
     navController: NavHostController,
-    startDestination: Routes = Routes.Landing
+    startDestination: Routes = Routes.SplashScreen,      // ← default is now SplashScreen
+    postSplashDestination: Routes = Routes.Landing        // ← where to go after splash
 ) {
-
     val viewModel: LoginViewModel = hiltViewModel()
     val profileViewModel: ProfileViewModel = hiltViewModel()
 
@@ -40,21 +41,34 @@ fun NavGraphs(
         navController = navController,
         startDestination = startDestination
     ) {
-        mainGraph(navController, viewModel, profileViewModel)
+        mainGraph(navController, viewModel, profileViewModel, postSplashDestination)
     }
 }
-
-
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun NavGraphBuilder.mainGraph(
     navController: NavHostController,
     viewModel: LoginViewModel,
-    profileViewModel: ProfileViewModel
+    profileViewModel: ProfileViewModel,
+    postSplashDestination: Routes                         // ← renamed from startDestination
 ) {
 
+    // ── Splash ────────────────────────────────────────────────────────────────
+    composable<Routes.SplashScreen> {
+        SplashScreen(
+            onSplashFinished = {
+                navController.navigate(postSplashDestination) {
+                    popUpTo<Routes.SplashScreen> { inclusive = true }  // ← type-safe popUpTo
+                }
+            }
+        )
+    }
 
-    // 🔹 Auth
+    // ── Auth ──────────────────────────────────────────────────────────────────
+    composable<Routes.Landing> {
+        AuthScreen(navController)
+    }
+
     composable<Routes.LoginScreen> {
         AuthScreen(navController)
     }
@@ -63,19 +77,19 @@ fun NavGraphBuilder.mainGraph(
         NotificationScreen(navController)
     }
 
-    // 🔹 Main Container (Bottom Nav)
+    // ── Main container (Bottom Nav) ───────────────────────────────────────────
     composable<Routes.MainScreen> {
         MainScreen(navController, profileViewModel)
     }
 
-    // 🔹 Dashboard
+    // ── Dashboard ─────────────────────────────────────────────────────────────
     composable<Routes.Dashboard> {
         DashboardScreen(navController, navController, profileViewModel)
     }
 
-    // 🔹 Features
+    // ── Features ──────────────────────────────────────────────────────────────
     composable<Routes.Crop> {
-        CropScreen(navController, navController)
+        CropScreen()
     }
 
     composable(BottomNavItem.Disease.route) {
@@ -90,12 +104,12 @@ fun NavGraphBuilder.mainGraph(
         WeatherScreen(navController)
     }
 
-    // 🔹 Profile
+    // ── Profile ───────────────────────────────────────────────────────────────
     composable<Routes.Profile> {
         Profile(navController, viewModel, profileViewModel)
     }
 
-    composable<Routes.EditProfile>{
+    composable<Routes.EditProfile> {
         EditProfileScreen(navController, profileViewModel)
     }
 }

@@ -2,43 +2,53 @@ package com.tech.cropify.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.tech.cropify.util.LocationHelper
+import com.tech.cropify.util.SharedPreferenceManager
 import com.tech.cropify.viewModel.ProfileViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 
 private val DarkGreen   = Color(0xFF1E4010)
-private val AccentGreen = Color(0xFF4A8A30)
+val AccentGreen = Color(0xFF4A8A30)
 private val BgCream     = Color(0xFFF5F0E8)
-private val CardBorder  = Color(0xFFE0D8C8)
+val CardBorder  = Color(0xFFE0D8C8)
 private val TextDark    = Color(0xFF2A2010)
-private val TextMuted   = Color(0xFF8A7A5A)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +78,73 @@ fun EditProfileScreen(
 
     var isLocatingLoading by remember { mutableStateOf(false) }
     var locationError by remember { mutableStateOf<String?>(null) }
+
+    val token = SharedPreferenceManager.getToken(context) ?: ""
+
+    // ---- Profile picture state ----
+    // `profileImageUri` holds a freshly picked/captured local image (camera or gallery).
+    // If null, we fall back to showing whatever remote URL is already on the profile.
+    var profileImageUri by remember { mutableStateOf<Uri?>(null) }
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    fun createCameraCaptureUri(): Uri {
+        val imagesDir = File(context.cacheDir, "images").apply { mkdirs() }
+        val imageFile = File(imagesDir, "profile_${System.currentTimeMillis()}.jpg")
+        return FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            imageFile
+        )
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success && pendingCameraUri != null) {
+            profileImageUri = pendingCameraUri
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            val uri = createCameraCaptureUri()
+            pendingCameraUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            locationError = null
+        }
+    }
+
+    fun launchCamera() {
+        val hasPermission = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (hasPermission) {
+            val uri = createCameraCaptureUri()
+            pendingCameraUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    // Modern photo picker (Android 13+ / backported via Google Play system update) —
+    // no runtime storage permission needed for this contract.
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) profileImageUri = uri
+    }
+
+    fun launchGallery() {
+        galleryLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
 
     fun runLocationLookup() {
         isLocatingLoading = true
@@ -104,6 +181,52 @@ fun EditProfileScreen(
         else permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
+    if (showImageSourceDialog) {
+        AlertDialog(
+            onDismissRequest = { showImageSourceDialog = false },
+            title = { Text("Update profile photo", fontWeight = FontWeight.SemiBold) },
+            text = {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable {
+                                showImageSourceDialog = false
+                                launchCamera()
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, tint = AccentGreen)
+                        Spacer(Modifier.width(12.dp))
+                        Text("Take Photo", fontSize = 14.sp, color = TextDark)
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable {
+                                showImageSourceDialog = false
+                                launchGallery()
+                            }
+                            .padding(vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = AccentGreen)
+                        Spacer(Modifier.width(12.dp))
+                        Text("Choose from Gallery", fontSize = 14.sp, color = TextDark)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showImageSourceDialog = false }) {
+                    Text("Cancel", color = TextMuted)
+                }
+            }
+        )
+    }
+
     Scaffold(
         containerColor = BgCream,
         topBar = {
@@ -125,6 +248,71 @@ fun EditProfileScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+
+            // ---- Profile picture section ----
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(contentAlignment = Alignment.BottomEnd) {
+                    Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .border(1.dp, CardBorder, CircleShape)
+                            .clickable { showImageSourceDialog = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        // Priority: freshly picked local image > existing backend/local photo > avatar icon.
+                        val displayModel: Any? = profileImageUri ?: profile.profileUri
+                        if (displayModel != null) {
+                            AsyncImage(
+                                model = displayModel,
+                                contentDescription = "Profile photo",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = "Profile photo",
+                                tint = TextMuted,
+                                modifier = Modifier.size(44.dp)
+                            )
+                        }
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(AccentGreen)
+                            .border(2.dp, BgCream, CircleShape)
+                            .clickable { showImageSourceDialog = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.CameraAlt,
+                            contentDescription = "Change profile photo",
+                            tint = Color.White,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
+                }
+            }
+            Text(
+                "Tap to change photo",
+                fontSize = 11.sp,
+                color = TextMuted,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 20.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
 
             SectionLabel("Account Details")
             FormCard {
@@ -229,14 +417,25 @@ fun EditProfileScreen(
                             locationLabel = locationLabel,
                             latitude = latitude,
                             longitude = longitude,
-                            soilType = soilType
+                            soilType = soilType,
+                            profileUri = profileImageUri
                         )
-                        // password stays as whatever's already stored (empty string
-                        // if never set) — only include a password field here if you
-                        // want users editing it, since the API expects it every call.
-                        viewModel.saveProfile(updated) {
-                            navController.popBackStack()
+
+                        // Only copy/upload a new photo if the user actually picked one
+                        // this session. `profileImageUri` may be a content:// (gallery)
+                        // or a FileProvider content:// (camera) — either way it needs
+                        // to be materialized into a real File for the multipart upload.
+                        val newImageFile: File? = profileImageUri?.let { uri ->
+                            copyImageToInternalStorage(context, uri)?.let { path -> File(path) }
                         }
+
+                        viewModel.saveProfile(
+                            updated = updated,
+                            token = token,
+                            context = context,
+                            newProfileImageFile = newImageFile,
+                            onSuccess = { navController.popBackStack() }
+                        )
                     }
                     .padding(vertical = 15.dp),
                 horizontalArrangement = Arrangement.Center
@@ -300,6 +499,3 @@ private fun LabeledField(
         )
     }
 }
-
-
-

@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">Cropify</string>
+    <string name="web_client_id">799848681483-be818qtdnobi7cs3ubth29u0o13n38jm.apps.googleusercontent.com</string>
+    <string name="farm_details">খামারের বিবরণ</string>
+    <string name="crop_season">ফসলের মৌসুম</string>
+    <string name="location">অবস্থান</string>
+    <string name="farm_size">খামারের আকার</string>
+    <string name="soil_type">মাটির ধরন</string>
+    <string name="notifications">বিজ্ঞপ্তি</string>
+    <string name="rain_alerts">বৃষ্টির সতর্কতা</string>
+    <string name="rain_alerts_sub">বৃষ্টির পূর্বাভাস</string>
+    <string name="disease_alerts">রোগের সতর্কতা</string>
+    <string name="disease_alerts_sub">ফসলের রোগের সতর্কবার্তা</string>
+    <string name="weekly_report">সাপ্তাহিক প্রতিবেদন</string>
+    <string name="weekly_report_sub">প্রতি রবিবার সকালে</string>
+    <string name="language">ভাষা</string>
+    <string name="app_settings">অ্যাপ সেটিংস</string>
+    <string name="dark_mode">ডার্ক মোড</string>
+    <string name="dark_mode_sub">রাতে সহজে পড়ার জন্য</string>
+    <string name="offline_mode">অফলাইন মোড</string>
+    <string name="offline_mode_sub">ইন্টারনেট ছাড়াই ব্যবহার করুন</string>
+    <string name="location_access">অবস্থানের অনুমতি</string>
+    <string name="location_access_sub">আবহাওয়া ও স্থানীয় তথ্যের জন্য</string>
+    <string name="my_reports">আমার প্রতিবেদন</string>
+    <string name="my_reports_sub">সংরক্ষিত সব প্রতিবেদন দেখুন</string>
+    <string name="privacy_security">গোপনীয়তা ও নিরাপত্তা</string>
+    <string name="privacy_security_sub">পাসওয়ার্ড, ডেটা সেটিংস</string>
+    <string name="help_support">সহায়তা ও সমর্থন</string>
+    <string name="help_support_sub">সাধারণ প্রশ্ন, যোগাযোগ করুন</string>
+    <string name="sign_out">সাইন আউট</string>
+    <string name="edit_profile">প্রোফাইল সম্পাদনা করুন</string>
+    <string name="farmer">কৃষক</string>
+    <string name="acres">একর</string>
+    <string name="app_version">ফার্মস্মার্ট v2.4.1 · ভারতীয় কৃষকদের জন্য 🌾</string>
+</resources>

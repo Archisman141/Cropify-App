@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">Cropify</string>
+    <string name="web_client_id">799848681483-be818qtdnobi7cs3ubth29u0o13n38jm.apps.googleusercontent.com</string>
+
+    <string name="farm_details">ਖੇਤ ਦੀ ਜਾਣਕਾਰੀ</string>
+    <string name="crop_season">ਫਸਲ ਦਾ ਮੌਸਮ</string>
+    <string name="location">ਸਥਾਨ</string>
+    <string name="farm_size">ਖੇਤ ਦਾ ਆਕਾਰ</string>
+    <string name="soil_type">ਮਿੱਟੀ ਦੀ ਕਿਸਮ</string>
+    <string name="notifications">ਸੂਚਨਾਵਾਂ</string>
+    <string name="rain_alerts">ਮੀਂਹ ਅਲਰਟ</string>
+    <string name="rain_alerts_sub">ਬਾਰਿਸ਼ ਦੀਆਂ ਭਵਿੱਖਬਾਣੀਆਂ</string>
+    <string name="disease_alerts">ਬਿਮਾਰੀ ਅਲਰਟ</string>
+    <string name="disease_alerts_sub">ਫਸਲ ਰੋਗ ਦੀਆਂ ਚੇਤਾਵਨੀਆਂ</string>
+    <string name="weekly_report">ਹਫਤਾਵਾਰੀ ਰਿਪੋਰਟ</string>
+    <string name="weekly_report_sub">ਹਰ ਐਤਵਾਰ ਸਵੇਰੇ</string>
+    <string name="language">ਭਾਸ਼ਾ</string>
+    <string name="app_settings">ਐਪ ਸੈਟਿੰਗਾਂ</string>
+    <string name="dark_mode">ਡਾਰਕ ਮੋਡ</string>
+    <string name="dark_mode_sub">ਰਾਤ ਨੂੰ ਆਸਾਨ ਪੜ੍ਹਾਈ</string>
+    <string name="offline_mode">ਆਫਲਾਈਨ ਮੋਡ</string>
+    <string name="offline_mode_sub">ਇੰਟਰਨੈੱਟ ਤੋਂ ਬਿਨਾਂ ਵਰਤੋਂ</string>
+    <string name="location_access">ਸਥਾਨ ਦੀ ਇਜਾਜ਼ਤ</string>
+    <string name="location_access_sub">ਮੌਸਮ ਅਤੇ ਸਥਾਨਕ ਡੇਟਾ ਲਈ</string>
+    <string name="my_reports">ਮੇਰੀਆਂ ਰਿਪੋਰਟਾਂ</string>
+    <string name="my_reports_sub">ਸਾਰੀਆਂ ਸੁਰੱਖਿਅਤ ਰਿਪੋਰਟਾਂ ਦੇਖੋ</string>
+    <string name="privacy_security">ਗੋਪਨੀਯਤਾ ਅਤੇ ਸੁਰੱਖਿਆ</string>
+    <string name="privacy_security_sub">ਪਾਸਵਰਡ, ਡੇਟਾ ਸੈਟਿੰਗਾਂ</string>
+    <string name="help_support">ਮਦਦ ਅਤੇ ਸਹਾਇਤਾ</string>
+    <string name="help_support_sub">ਸਵਾਲ-ਜਵਾਬ, ਸਾਡੇ ਨਾਲ ਸੰਪਰਕ ਕਰੋ</string>
+    <string name="sign_out">ਸਾਈਨ ਆਊਟ</string>
+    <string name="edit_profile">ਪ੍ਰੋਫਾਈਲ ਸੰਪਾਦਿਤ ਕਰੋ</string>
+    <string name="farmer">ਕਿਸਾਨ</string>
+    <string name="acres">ਏਕੜ</string>
+    <string name="app_version">FarmSmart v2.4.1 · ਭਾਰਤੀ ਕਿਸਾਨਾਂ ਲਈ 🌾</string>
+</resources>

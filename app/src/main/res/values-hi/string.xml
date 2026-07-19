@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">Cropify</string>
+    <string name="web_client_id">799848681483-be818qtdnobi7cs3ubth29u0o13n38jm.apps.googleusercontent.com</string>
+
+    <string name="farm_details">खेत की जानकारी</string>
+    <string name="crop_season">फसल का मौसम</string>
+    <string name="location">स्थान</string>
+    <string name="farm_size">खेत का आकार</string>
+    <string name="soil_type">मिट्टी का प्रकार</string>
+    <string name="notifications">सूचनाएं</string>
+    <string name="rain_alerts">वर्षा अलर्ट</string>
+    <string name="rain_alerts_sub">वर्षा की भविष्यवाणी</string>
+    <string name="disease_alerts">रोग अलर्ट</string>
+    <string name="disease_alerts_sub">फसल रोग की चेतावनी</string>
+    <string name="weekly_report">साप्ताहिक रिपोर्ट</string>
+    <string name="weekly_report_sub">हर रविवार सुबह</string>
+    <string name="language">भाषा</string>
+    <string name="app_settings">ऐप सेटिंग्स</string>
+    <string name="dark_mode">डार्क मोड</string>
+    <string name="dark_mode_sub">रात में आसान पढ़ाई</string>
+    <string name="offline_mode">ऑफलाइन मोड</string>
+    <string name="offline_mode_sub">बिना इंटरनेट के उपयोग करें</string>
+    <string name="location_access">स्थान की अनुमति</string>
+    <string name="location_access_sub">मौसम और स्थानीय डेटा के लिए</string>
+    <string name="my_reports">मेरी रिपोर्ट</string>
+    <string name="my_reports_sub">सभी सहेजी गई रिपोर्ट देखें</string>
+    <string name="privacy_security">गोपनीयता और सुरक्षा</string>
+    <string name="privacy_security_sub">पासवर्ड, डेटा सेटिंग्स</string>
+    <string name="help_support">सहायता और समर्थन</string>
+    <string name="help_support_sub">सामान्य प्रश्न, संपर्क करें</string>
+    <string name="sign_out">साइन आउट</string>
+    <string name="edit_profile">प्रोफ़ाइल संपादित करें</string>
+    <string name="farmer">किसान</string>
+    <string name="acres">एकड़</string>
+    <string name="app_version">FarmSmart v2.4.1 · भारतीय किसानों के लिए 🌾</string>
+</resources>

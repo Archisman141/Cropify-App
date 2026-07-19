@@ -1,4 +1,37 @@
 <resources>
     <string name="app_name">Cropify</string>
     <string name="web_client_id">799848681483-be818qtdnobi7cs3ubth29u0o13n38jm.apps.googleusercontent.com</string>
+
+    <!-- Profile Screen -->
+    <string name="farm_details">Farm Details</string>
+    <string name="crop_season">Crop Season</string>
+    <string name="location">Location</string>
+    <string name="farm_size">Farm Size</string>
+    <string name="soil_type">Soil Type</string>
+    <string name="notifications">Notifications</string>
+    <string name="rain_alerts">Rain Alerts</string>
+    <string name="rain_alerts_sub">Rainfall predictions</string>
+    <string name="disease_alerts">Disease Alerts</string>
+    <string name="disease_alerts_sub">Crop disease warnings</string>
+    <string name="weekly_report">Weekly Report</string>
+    <string name="weekly_report_sub">Every Sunday morning</string>
+    <string name="language">Language</string>
+    <string name="app_settings">App Settings</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="dark_mode_sub">Easier reading at night</string>
+    <string name="offline_mode">Offline Mode</string>
+    <string name="offline_mode_sub">Use without internet</string>
+    <string name="location_access">Location Access</string>
+    <string name="location_access_sub">For weather and local data</string>
+    <string name="my_reports">My Reports</string>
+    <string name="my_reports_sub">View all saved reports</string>
+    <string name="privacy_security">Privacy and Security</string>
+    <string name="privacy_security_sub">Password, data settings</string>
+    <string name="help_support">Help and Support</string>
+    <string name="help_support_sub">FAQs, contact us</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="farmer">Farmer</string>
+    <string name="acres">acres</string>
+    <string name="app_version">FarmSmart v2.4.1 · Built for Indian Farmers 🌾</string>
 </resources>

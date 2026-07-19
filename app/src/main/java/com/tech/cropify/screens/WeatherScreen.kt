@@ -7,7 +7,9 @@ import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +32,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.tech.cropify.model.weather.DailyForecast
 import com.tech.cropify.model.weather.WeatherResponse
 import com.tech.cropify.viewModel.WeatherViewModel
@@ -73,6 +78,19 @@ fun WeatherScreen(navController: NavHostController) {
         hasLocationPermission = result.values.any { it }
     }
 
+    // Handles the system "Turn on Location?" dialog triggered when location
+    // services are off at the OS level (the actual cause of both
+    // getCurrentLocation() and lastLocation returning null).
+    val locationSettingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            fetchLocationAndWeather(context, viewModel) { name -> placeName = name }
+        } else {
+            Log.w("Weather", "User declined to enable location services")
+        }
+    }
+
     // Ask for the permission the first time the screen is shown if we don't have it.
     LaunchedEffect(Unit) {
         if (!hasLocationPermission) {
@@ -85,10 +103,18 @@ fun WeatherScreen(navController: NavHostController) {
         }
     }
 
-    // Once we have permission, fetch the last known location and load the weather.
+    // Once we have permission, make sure location services are actually ON
+    // (not just the app permission) before fetching — and if they're off,
+    // trigger the standard system dialog to turn them on rather than failing
+    // silently the way a raw getCurrentLocation() null-check does.
     LaunchedEffect(hasLocationPermission) {
         if (hasLocationPermission) {
-            fetchLocationAndWeather(context, viewModel) { name -> placeName = name }
+            ensureLocationSettingsThen(
+                context = context,
+                onSatisfied = { fetchLocationAndWeather(context, viewModel) { name -> placeName = name } },
+                onResolvable = { intentSenderRequest -> locationSettingsLauncher.launch(intentSenderRequest) },
+                onUnresolvable = { e -> Log.e("Weather", "Location settings unresolvable", e) }
+            )
         }
     }
 
@@ -320,7 +346,7 @@ private fun LocationPermissionPrompt(
         Spacer(Modifier.height(8.dp))
         Text(
             text = "We use your location to show the weather for your area. " +
-                "Please turn on location permission to continue.",
+                    "Please turn on location permission to continue.",
             color = Muted,
             fontSize = 14.sp,
             textAlign = TextAlign.Center
@@ -386,13 +412,13 @@ private fun DayItem(
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-private fun Context.hasLocationPermission(): Boolean =
+fun Context.hasLocationPermission(): Boolean =
     ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-        PackageManager.PERMISSION_GRANTED ||
-        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-        PackageManager.PERMISSION_GRANTED
+            PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
 
-private fun Context.openAppSettings() {
+fun Context.openAppSettings() {
     val intent = Intent(
         Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
         Uri.fromParts("package", packageName, null)
@@ -401,26 +427,9 @@ private fun Context.openAppSettings() {
 }
 
 /** OpenWeather returns temperature in Kelvin by default; convert to whole-degree Celsius. */
-private fun Double.kelvinToCelsius(): Int = (this - 273.15).roundToInt()
+fun Double.kelvinToCelsius(): Int = (this - 273.15).roundToInt()
 
-@Suppress("MissingPermission")
-private fun fetchLocationAndWeather(
-    context: Context,
-    viewModel: WeatherViewModel,
-    onPlaceResolved: (String?) -> Unit
-) {
-    if (!context.hasLocationPermission()) return
-
-    val client = LocationServices.getFusedLocationProviderClient(context)
-    client.lastLocation.addOnSuccessListener { location ->
-        if (location != null) {
-            viewModel.getWeather(location.latitude, location.longitude)
-            onPlaceResolved(resolvePlaceName(context, location.latitude, location.longitude))
-        }
-    }
-}
-
-private fun resolvePlaceName(context: Context, lat: Double, lon: Double): String? = try {
+fun resolvePlaceName(context: Context, lat: Double, lon: Double): String? = try {
     @Suppress("DEPRECATION")
     val address = Geocoder(context).getFromLocation(lat, lon, 1)?.firstOrNull()
     address?.let {
@@ -430,4 +439,88 @@ private fun resolvePlaceName(context: Context, lat: Double, lon: Double): String
     }
 } catch (_: Exception) {
     null
+}
+
+fun ensureLocationSettingsThen(
+    context: Context,
+    onSatisfied: () -> Unit,
+    onResolvable: (IntentSenderRequest) -> Unit,
+    onUnresolvable: (Exception) -> Unit
+) {
+    val locationRequest = LocationRequest.Builder(
+        com.google.android.gms.location.Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+        10_000L
+    ).build()
+
+    val settingsRequest = LocationSettingsRequest.Builder()
+        .addLocationRequest(locationRequest)
+        .build()
+
+    LocationServices.getSettingsClient(context)
+        .checkLocationSettings(settingsRequest)
+        .addOnSuccessListener { onSatisfied() }
+        .addOnFailureListener { e ->
+            if (e is ResolvableApiException) {
+                try {
+                    onResolvable(IntentSenderRequest.Builder(e.resolution).build())
+                } catch (sendEx: Exception) {
+                    onUnresolvable(sendEx)
+                }
+            } else {
+                onUnresolvable(e)
+            }
+        }
+}
+
+
+@Suppress("MissingPermission")
+fun fetchLocationAndWeather(
+    context: Context,
+    viewModel: WeatherViewModel,
+    onPlaceResolved: (String?) -> Unit
+) {
+    if (!context.hasLocationPermission()) {
+        Log.w("Weather", "fetchLocationAndWeather called without location permission")
+        return
+    }
+
+    val client = LocationServices.getFusedLocationProviderClient(context)
+    val cts = com.google.android.gms.tasks.CancellationTokenSource()
+
+    fun loadWeather(lat: Double, lon: Double) {
+        val positiveLon = kotlin.math.abs(lon)
+        Log.d("Weather", "Loading weather for lat=$lat lon=$positiveLon")
+        viewModel.getWeather(lat, positiveLon)
+        onPlaceResolved(resolvePlaceName(context, lat, positiveLon))
+    }
+
+    client.getCurrentLocation(
+        com.google.android.gms.location.Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+        cts.token
+    ).addOnSuccessListener { location ->
+        if (location != null) {
+            loadWeather(location.latitude, location.longitude)
+        } else {
+            Log.w("Weather", "getCurrentLocation() returned null, falling back to lastLocation")
+            // Fallback: a cached fix is far better than no request at all.
+            client.lastLocation
+                .addOnSuccessListener { last ->
+                    if (last != null) {
+                        loadWeather(last.latitude, last.longitude)
+                    } else {
+                        Log.e(
+                            "Weather",
+                            "No location available at all (getCurrentLocation and lastLocation " +
+                                    "both null). Ensure device/emulator location is turned on and, " +
+                                    "on an emulator, set a mock location via Extended Controls."
+                        )
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.e("Weather", "lastLocation fallback failed", e)
+                }
+        }
+    }.addOnFailureListener { e ->
+        Log.e("Weather", "getCurrentLocation() failed", e)
+    }
 }

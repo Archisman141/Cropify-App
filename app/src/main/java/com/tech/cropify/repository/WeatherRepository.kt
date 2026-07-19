@@ -11,7 +11,7 @@ class WeatherRepository @Inject constructor(
     suspend fun getWeather(
         latitude: Double,
         longitude: Double
-    ): WeatherResponse{
+    ): WeatherResponse {
         return weatherApi.getCurrentWeather(
             latitude = latitude,
             longitude = longitude,

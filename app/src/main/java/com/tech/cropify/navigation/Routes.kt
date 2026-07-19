@@ -5,6 +5,9 @@ import kotlinx.serialization.Serializable
 sealed class Routes {
 
     @Serializable
+    data object SplashScreen : Routes()
+
+    @Serializable
     data object Landing : Routes()
 
     @Serializable
@@ -30,11 +33,12 @@ sealed class Routes {
 
     @Serializable
     data object Weather : Routes()
+
     @Serializable
     data object Profile : Routes()
 
     @Serializable
-    data object NotificationScreen: Routes()
+    data object NotificationScreen : Routes()
 
     @Serializable
     data object EditProfile : Routes()

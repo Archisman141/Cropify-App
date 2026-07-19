@@ -1,5 +1,7 @@
 package com.tech.cropify.model.profile
 
+import android.net.Uri
+
 data class UserProfile(
     val userName: String = "Archisman Khanra",
     val emailId: String = "",
@@ -13,6 +15,7 @@ data class UserProfile(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val farmSizeAcres: String = "3.2",
+    val profileUri: Uri? = null,
     val soilType: SoilType = SoilType.BLACK_COTTON
 )
 

@@ -33,7 +33,6 @@ private val FieldBgActive   = Color.White
 private val FieldBgInactive = BgCream
 private val TextDark        = Color(0xFF2A2010)
 private val TextBrown       = Color(0xFF4A3A1E)
-private val TextMuted       = Color(0xFF8A7A5A)
 private val CardWhite       = Color.White
 private val TipRowDivider   = Color(0xFFF0E8D8)
 private val TipTextColor    = Color(0xFF3A2A10)
@@ -109,9 +108,7 @@ fun SoilScreen(navController: NavHostController, bottomNavController: NavHostCon
 
             // ── Scrollable Body ──────────────────────────────────────────────────
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState())
+                modifier = Modifier.fillMaxWidth()
             ) {
 
                 // Green page header

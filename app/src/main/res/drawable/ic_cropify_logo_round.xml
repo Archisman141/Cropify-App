@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer dark green circle background -->
+    <path
+        android:fillColor="#1E4010"
+        android:pathData="M54,54m-54,0a54,54 0,1 1,108 0a54,54 0,1 1,-108 0" />
+
+    <!-- Subtle inner circle ring for depth -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#2D6018"
+        android:strokeWidth="1.5"
+        android:pathData="M54,54m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0" />
+
+    <!-- Left leaf (gold) -->
+    <path
+        android:fillColor="#F5C842"
+        android:pathData="
+            M54,28
+            C54,28 38,36 36,50
+            C34,60 42,67 50,68
+            C52,58 54,44 54,28Z" />
+
+    <!-- Right leaf (bright green) -->
+    <path
+        android:fillColor="#5AAC2E"
+        android:pathData="
+            M54,28
+            C54,28 70,36 72,50
+            C74,60 66,67 58,68
+            C56,58 54,44 54,28Z" />
+
+    <!-- Leaf vein left -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E8A030"
+        android:strokeWidth="1.2"
+        android:pathData="M54,28 C50,42 46,56 50,68" />
+
+    <!-- Leaf vein right -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#3A8A1A"
+        android:strokeWidth="1.2"
+        android:pathData="M54,28 C58,42 62,56 58,68" />
+
+    <!-- Stem -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F5C842"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:pathData="M54,68 L54,82" />
+
+    <!-- Ground / soil line -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F5C842"
+        android:strokeWidth="2.8"
+        android:strokeLineCap="round"
+        android:pathData="M40,82 L68,82" />
+
+    <!-- Left soil dot -->
+    <path
+        android:fillColor="#5AAC2E"
+        android:pathData="M44,78m-2.5,0a2.5,2.5 0,1 1,5 0a2.5,2.5 0,1 1,-5 0" />
+
+    <!-- Right soil dot -->
+    <path
+        android:fillColor="#5AAC2E"
+        android:pathData="M64,78m-2.5,0a2.5,2.5 0,1 1,5 0a2.5,2.5 0,1 1,-5 0" />
+
+    <!-- Center soil dot -->
+    <path
+        android:fillColor="#F5C842"
+        android:pathData="M54,78m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+
+</vector>

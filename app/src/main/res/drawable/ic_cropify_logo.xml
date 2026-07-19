@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background circle -->
+    <path
+        android:fillColor="#1E4010"
+        android:pathData="M54,54m-54,0a54,54 0,1 1,108 0a54,54 0,1 1,-108 0" />
+
+    <!-- Leaf left -->
+    <path
+        android:fillColor="#F5C842"
+        android:pathData="M54,30 C44,30 34,38 34,50 C34,58 40,64 48,66 C50,56 54,46 54,30Z" />
+
+    <!-- Leaf right -->
+    <path
+        android:fillColor="#5AAC2E"
+        android:pathData="M54,30 C64,30 74,38 74,50 C74,58 68,64 60,66 C58,56 54,46 54,30Z" />
+
+    <!-- Stem -->
+    <path
+        android:fillColor="#F5C842"
+        android:strokeColor="#F5C842"
+        android:strokeWidth="2.5"
+        android:pathData="M54,66 L54,80" />
+
+    <!-- Ground line -->
+    <path
+        android:fillColor="#F5C842"
+        android:strokeColor="#F5C842"
+        android:strokeWidth="2.5"
+        android:pathData="M42,80 L66,80" />
+
+    <!-- Soil dots -->
+    <path
+        android:fillColor="#5AAC2E"
+        android:pathData="M46,76m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+    <path
+        android:fillColor="#5AAC2E"
+        android:pathData="M62,76m-2,0a2,2 0,1 1,4 0a2,2 0,1 1,-4 0" />
+
+</vector>

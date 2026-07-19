@@ -1,5 +1,13 @@
 package com.tech.cropify.screens
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -7,7 +15,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,20 +32,20 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import com.tech.cropify.model.prediction.Prediction
 import com.tech.cropify.model.prediction.PredictionBody
 import com.tech.cropify.viewModel.PredictionViewModel
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import com.tech.cropify.viewModel.CropRecommendViewModel
+import com.tech.cropify.viewModel.HybridAdvisoryViewModel
 
 // ── Brand colours ──────────────────────────────────────────────────────────
 private val DarkGreen    = Color(0xFF1E4010)
-private val MedGreen     = Color(0xFF2D5E1A)
-private val AccentGreen  = Color(0xFF4A8A30)
 private val YellowAccent = Color(0xFFF5C842)
 private val BgCream      = Color(0xFFF5F0E8)
-private val CardBorder   = Color(0xFFE0D8C8)
 private val TextDark     = Color(0xFF2A2010)
-private val TextMuted    = Color(0xFF8A7A5A)
 private val BoxBg        = Color(0xFFF5F0E8)
 private val ErrorRed     = Color(0xFFB3261E)
 private val ErrorBg      = Color(0xFFFCEAEA)
@@ -62,11 +69,114 @@ private val indianStates = listOf(
     "Rajasthan", "Tamil Nadu", "Telangana", "Uttar Pradesh", "West Bengal"
 )
 
+enum class CropTab(val label: String, val icon: String) {
+    PREDICT("Predict", "🌾"),
+    RECOMMEND("Recommend", "🌱"),
+    HYBRID("Hybrid", "🧬")
+}
+
 @Composable
 fun CropScreen(
-    navController: NavHostController,
-    bottomNavController: NavHostController,
-    viewModel: PredictionViewModel = hiltViewModel()
+    predictionViewModel: PredictionViewModel = hiltViewModel(),
+    recommendViewModel: CropRecommendViewModel = hiltViewModel(),
+    hybridViewModel: HybridAdvisoryViewModel = hiltViewModel()
+) {
+    var selectedTab by remember { mutableStateOf(CropTab.PREDICT) }
+
+    Scaffold(
+        topBar = { CropTopBar() },
+        containerColor = BgCream
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Header + tab switcher now live INSIDE each tab's content,
+            // so they animate together with the rest of that screen.
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = {
+                    val forward = targetState.ordinal > initialState.ordinal
+                    val dir = if (forward) 1 else -1
+                    (slideInHorizontally(animationSpec = tween(280)) { w -> dir * w } + fadeIn(tween(280))) togetherWith
+                            (slideOutHorizontally(animationSpec = tween(280)) { w -> -dir * w } + fadeOut(tween(280)))
+                },
+                label = "crop_tab_switch"
+            ) { tab ->
+                when (tab) {
+                    CropTab.PREDICT -> CropPredictionContent(
+                        viewModel = predictionViewModel,
+                        selectedTab = selectedTab,
+                        onSelectTab = { selectedTab = it }
+                    )
+                    CropTab.RECOMMEND -> CropRecommendationContent(
+                        viewModel = recommendViewModel,
+                        selectedTab = selectedTab,
+                        onSelectTab = { selectedTab = it }
+                    )
+                    CropTab.HYBRID -> HybridAdviceContent(
+                        viewModel = hybridViewModel,
+                        selectedTab = selectedTab,
+                        onSelectTab = { selectedTab = it }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(8.dp))
+        }
+    }
+}
+
+@Composable
+fun CropTabSwitcher(selected: CropTab, onSelect: (CropTab) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(14.dp)
+            .clip(RoundedCornerShape(13.dp))
+            .background(Color.White)
+            .border(1.dp, CardBorder, RoundedCornerShape(13.dp))
+            .padding(4.dp)
+    ) {
+        CropTab.entries.forEach { tab ->
+            val isSelected = tab == selected
+            val bgColor by animateColorAsState(
+                targetValue = if (isSelected) MedGreen else Color.Transparent,
+                animationSpec = tween(220),
+                label = "tab_bg_${tab.name}"
+            )
+            val textColor by animateColorAsState(
+                targetValue = if (isSelected) Color.White else TextMuted,
+                animationSpec = tween(220),
+                label = "tab_text_${tab.name}"
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(bgColor)
+                    .clickable { onSelect(tab) }
+                    .padding(vertical = 9.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "${tab.icon} ${tab.label}",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = textColor
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CropPredictionContent(
+    viewModel: PredictionViewModel = hiltViewModel(),
+    selectedTab: CropTab,
+    onSelectTab: (CropTab) -> Unit
 ) {
     var selectedCrop  by remember { mutableStateOf("Rice") }
     var selectedState by remember { mutableStateOf("West Bengal") }
@@ -77,146 +187,125 @@ fun CropScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = { CropTopBar(navController) },
-        containerColor = BgCream
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-        ) {
-            PageHeroHeader(
-                icon = "🌾",
-                title = "Smart Crop Prediction",
-                subtitle = "Enter your field details for an AI yield prediction"
-            )
+    Column{
+        PageHeroHeader(
+            icon = "🌾",
+            title = "Smart Crop Prediction",
+            subtitle = "Enter your field details for an AI yield prediction"
+        )
+        CropTabSwitcher(selected = selectedTab, onSelect = onSelectTab)
 
-            Column(modifier = Modifier.padding(14.dp)) {
-
-                // ── Step 1: Select Crop ───────────────────────────────────────
-                FarmCard {
-                    SectionLabel("① Select Crop to Analyse")
-                    Spacer(Modifier.height(11.dp))
-                    Row(
-                        modifier = Modifier.horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        crops.forEach { crop ->
-                            CropChip(crop, selected = selectedCrop == crop.name) {
-                                selectedCrop = crop.name
-                                viewModel.clearResult()
-                            }
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                // ── Step 2: State ────────────────────────────────────────────
-                FarmCard {
-                    SectionLabel("② Select Your State")
-                    Spacer(Modifier.height(11.dp))
-                    StateDropdown(selectedState) { selectedState = it }
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                // ── Step 3: Field Details ─────────────────────────────────────
-                FarmCard {
-                    SectionLabel("③ Field & Input Details")
-                    Spacer(Modifier.height(11.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            IngredientBox("Farm Area", areaHectare, "hectare", range = 0.5f..50f, steps = 98) { areaHectare = it }
-                            IngredientBox("Fertilizer Used", fertilizer, "kg/ha", range = 0f..300f) { fertilizer = it }
-                        }
-                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            IngredientBox("Rainfall", rainfall, "mm", range = 0f..2000f) { rainfall = it }
-                            IngredientBox("Pesticide Used", pesticide, "kg/ha", range = 0f..50f, steps = 100) { pesticide = it }
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                // ── Predict Button ────────────────────────────────────────────
-                Button(
-                    onClick = {
-                        viewModel.getPrediction(
-                            PredictionBody(
-                                state = selectedState,
-                                crop = selectedCrop,
-                                area = areaHectare.toString(),
-                                fertilizer = fertilizer.toString(),
-                                pesticide = pesticide.toString(),
-                                rainfall = rainfall.toString()
-                            )
-                        )
-                    },
-                    enabled = !uiState.isLoading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(13.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-                    contentPadding = PaddingValues(0.dp)
+        Column(modifier = Modifier.padding(14.dp)){
+            FarmCard {
+                SectionLabel("① Select Crop to Analyse")
+                Spacer(Modifier.height(11.dp))
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.linearGradient(listOf(MedGreen, AccentGreen)),
-                                RoundedCornerShape(13.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (uiState.isLoading) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                CircularProgressIndicator(
-                                    color = Color.White,
-                                    strokeWidth = 2.dp,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text("Analysing…", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.White)
-                            }
-                        } else {
-                            Text("🤖  Run AI Prediction", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                    crops.forEach { crop ->
+                        CropChip(crop, selected = selectedCrop == crop.name) {
+                            selectedCrop = crop.name
+                            viewModel.clearResult()
                         }
                     }
-                }
-
-                // ── Error state ──────────────────────────────────────────────
-                uiState.error?.let { message ->
-                    Spacer(Modifier.height(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(11.dp))
-                            .background(ErrorBg)
-                            .border(1.dp, Color(0xFFE8B4B0), RoundedCornerShape(11.dp))
-                            .padding(12.dp)
-                    ) {
-                        Text("⚠️ $message", fontSize = 13.sp, color = ErrorRed)
-                    }
-                }
-
-                // ── Result Card ───────────────────────────────────────────────
-                uiState.result?.let { result ->
-                    Spacer(Modifier.height(12.dp))
-                    CropResultCard(selectedCrop, result)
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
+
+
+            FarmCard {
+                SectionLabel("② Select Your State")
+                Spacer(Modifier.height(11.dp))
+                StateDropdown(selectedState) { selectedState = it }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+
+            FarmCard {
+                SectionLabel("③ Field & Input Details")
+                Spacer(Modifier.height(11.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        IngredientBox("Farm Area", areaHectare, "hectare", range = 0.5f..50f, steps = 98) { areaHectare = it }
+                        IngredientBox("Fertilizer Used", fertilizer, "kg/ha", range = 0f..300f) { fertilizer = it }
+                    }
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        IngredientBox("Rainfall", rainfall, "mm", range = 0f..2000f) { rainfall = it }
+                        IngredientBox("Pesticide Used", pesticide, "kg/ha", range = 0f..50f, steps = 100) { pesticide = it }
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+
+            Button(
+                onClick = {
+                    viewModel.getPrediction(
+                        PredictionBody(
+                            state = selectedState,
+                            crop = selectedCrop,
+                            area = areaHectare.toString(),
+                            fertilizer = fertilizer.toString(),
+                            pesticide = pesticide.toString(),
+                            rainfall = rainfall.toString()
+                        )
+                    )
+                },
+                enabled = !uiState.isLoading,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(13.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                contentPadding = PaddingValues(0.dp)
+            )
+            {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Brush.linearGradient(listOf(MedGreen, AccentGreen)), RoundedCornerShape(13.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (uiState.isLoading) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                            Text("Analysing…", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                        }
+                    } else {
+                        Text("🤖  Run AI Prediction", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                    }
+                }
+            }
+
+
+            uiState.error?.let { message ->
+                Spacer(Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(11.dp))
+                        .background(ErrorBg)
+                        .border(1.dp, Color(0xFFE8B4B0), RoundedCornerShape(11.dp))
+                        .padding(12.dp)
+                ) {
+                    Text("⚠️ $message", fontSize = 13.sp, color = ErrorRed)
+                }
+            }
+
+
+            uiState.result?.let { result ->
+                Spacer(Modifier.height(12.dp))
+                CropResultCard(selectedCrop, result)
+            }
         }
     }
 }
 
 // ── Top bar ───────────────────────────────────────────────────────────────────
 @Composable
-fun CropTopBar(navController: NavHostController) {
+fun CropTopBar() {
     Surface(color = Color.White, shadowElevation = 2.dp) {
         Row(
             modifier = Modifier
@@ -252,11 +341,6 @@ fun PageHeroHeader(icon: String, title: String, subtitle: String) {
         }
     }
 }
-
-//@Composable
-//fun SectionLabel(text: String) {
-//    Text(text.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextMuted, letterSpacing = 0.5.sp)
-//}
 
 @Composable
 fun FarmCard(content: @Composable ColumnScope.() -> Unit) {
@@ -295,9 +379,8 @@ private fun CropChip(crop: CropOption, selected: Boolean, onClick: () -> Unit) {
     }
 }
 
-// ── State dropdown ───────────────────────────────────────────────────────────
 @Composable
-private fun StateDropdown(selected: String, onSelect: (String) -> Unit) {
+fun StateDropdown(selected: String, onSelect: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         Row(
@@ -329,7 +412,7 @@ private fun StateDropdown(selected: String, onSelect: (String) -> Unit) {
 
 // ── Ingredient box with slider ─────────────────────────────────────────────────
 @Composable
-private fun IngredientBox(
+fun IngredientBox(
     label: String,
     value: Float,
     unit: String,
@@ -412,7 +495,7 @@ private fun CropResultCard(cropName: String, result: Prediction) {
                 }
 
                 Spacer(Modifier.height(10.dp))
-                // ── Optimization card ──────────────────────────────────────
+
                 Card(
                     shape = RoundedCornerShape(13.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),

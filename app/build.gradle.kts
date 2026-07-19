@@ -32,8 +32,14 @@ android {
             localProperties.load(localPropertiesFile.inputStream())
         }
         val agroApiKey = localProperties.getProperty("AGRO_API_KEY") ?: ""
+        val baseUrl = localProperties.getProperty("BASE_URL") ?: ""
+        val dauth = localProperties.getProperty("D_AUTH") ?: ""
+        val weatherBaseUrl = localProperties.getProperty("BASE_URL_WEATHER") ?: ""
 
         buildConfigField("String", "AGRO_API_KEY", "\"$agroApiKey\"")
+        buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
+        buildConfigField("String", "D_AUTH", "\"$dauth\"")
+        buildConfigField("String","BASE_URL_WEATHER","\"$weatherBaseUrl\"")
     }
 
     buildTypes {
@@ -128,5 +134,8 @@ dependencies {
     implementation (libs.googleid)
     implementation(libs.play.services.location)
     implementation(libs.play.services.location.v2140)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation("com.squareup.retrofit2:converter-scalars:3.0.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
 
 }

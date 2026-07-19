@@ -7,5 +7,6 @@ data class AuthRequest(
     val phone: String?,
     val state: String? = null,
     val city: String? = null,
-    val village: String? = null
+    val village: String? = null,
+    val profilePic: String? = null,
 )

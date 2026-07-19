@@ -1,21 +1,28 @@
 package com.tech.cropify.screens
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -25,18 +32,19 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
+import com.tech.cropify.model.weather.WeatherResponse
 import com.tech.cropify.navigation.Routes
 import com.tech.cropify.viewModel.ProfileViewModel
+import com.tech.cropify.viewModel.WeatherViewModel
+import kotlin.math.roundToInt
 
 // ─── Brand colours ────────────────────────────────────────────────────────────
 private val DarkGreen    = Color(0xFF1E4010)
-private val MedGreen     = Color(0xFF3A7A20)
-private val AccentGreen  = Color(0xFF4A8A30)
 private val YellowAccent = Color(0xFFF5C842)
 private val BgCream      = Color(0xFFF0EBE0)
-private val CardBorder   = Color(0xFFE0D8C8)
 private val TextDark     = Color(0xFF2A2010)
-private val TextMuted    = Color(0xFF8A7A5A)
 private val AlertYellow  = Color(0xFFFFF3CD)
 private val AlertBorder  = Color(0xFFF5C842)
 
@@ -44,12 +52,77 @@ private val AlertBorder  = Color(0xFFF5C842)
 fun DashboardScreen(
     navController: NavController,
     bottomNavController: NavHostController,
-    profileViewModel: ProfileViewModel
+    profileViewModel: ProfileViewModel,
+    weatherViewModel: WeatherViewModel = hiltViewModel()
 ) {
     val profile by profileViewModel.profile.collectAsState()
+    val profileImageModel by profileViewModel.profileImageUrl.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        profileViewModel.fetchUserDetails(context)
+    }
+
+//    val profileImageModel = remember(profile.profileUri) {
+//        getProfileImageToDisplay(context) ?: profile.profileUri
+//    }
+
+    val weather by weatherViewModel.weather.collectAsState()
+    var hasLocationPermission by remember { mutableStateOf(context.hasLocationPermission()) }
+    var placeName by remember { mutableStateOf<String?>(null) }
+
+    val weatherPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { result ->
+        hasLocationPermission = result.values.any { it }
+    }
+
+    val locationSettingsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            fetchLocationAndWeather(context, weatherViewModel) { name -> placeName = name }
+        } else {
+            android.util.Log.w("Weather", "User declined to enable location services (Dashboard)")
+        }
+    }
+
+    fun requestWeather() {
+        ensureLocationSettingsThen(
+            context = context,
+            onSatisfied = { fetchLocationAndWeather(context, weatherViewModel) { name -> placeName = name } },
+            onResolvable = { intentSenderRequest -> locationSettingsLauncher.launch(intentSenderRequest) },
+            onUnresolvable = { e -> android.util.Log.e("Weather", "Location settings unresolvable (Dashboard)", e) }
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        if (hasLocationPermission) {
+            requestWeather()
+        } else {
+            weatherPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    LaunchedEffect(hasLocationPermission) {
+        if (hasLocationPermission && weather == null) {
+            requestWeather()
+        }
+    }
 
     Scaffold(
-        topBar = { DashboardTopBar(navController) },
+        topBar = {
+            DashboardTopBar(
+                navController = navController,
+                userName = profile.userName,
+                profileImageModel = profileImageModel
+            )
+        },
         containerColor = BgCream
     ) { innerPadding ->
         LazyColumn(
@@ -61,11 +134,17 @@ fun DashboardScreen(
         )
         {
             item {
-                DashboardHeader(navController, bottomNavController)
+                DashboardHeader(
+                    navController = navController,
+                    bottomNavController = bottomNavController,
+                    userName = profile.userName,
+                    weather = weather,
+                    placeName = placeName,
+                    hasLocationPermission = hasLocationPermission
+                )
             }
 
             item {
-                // ── Alert strip ──────────────────────────────────────────────────
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -86,7 +165,6 @@ fun DashboardScreen(
             item {
                 Column(modifier = Modifier.padding(14.dp)) {
 
-                    // ── Quick Actions ─────────────────────────────────────────────
                     Text(
                         "QUICK ACTIONS",
                         fontSize = 11.sp,
@@ -133,19 +211,17 @@ fun DashboardScreen(
                 Spacer(Modifier.height(8.dp))
 
             }
-//            item{
-//                FarmBottomNav(navController, active = "home")
-//            }
         }
-
-
     }
 }
 
 // ── Top App Bar ───────────────────────────────────────────────────────────────
 @Composable
-private fun DashboardTopBar(navController: NavController) {
-    // No statusBarsPadding needed — Scaffold's topBar slot handles it automatically
+private fun DashboardTopBar(
+    navController: NavController,
+    userName: String,
+    profileImageModel: String?
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -157,7 +233,7 @@ private fun DashboardTopBar(navController: NavController) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             Text("🌾", fontSize = 17.sp)
             Text(
-                "FarmSmart",
+                "FarmPredict",
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 17.sp,
@@ -165,17 +241,32 @@ private fun DashboardTopBar(navController: NavController) {
             )
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-//            Text("🌤️", fontSize = 19.sp, modifier = Modifier.clickable { navController.navigate(Routes.Weather) })
             Text("🔔", fontSize = 19.sp)
             Box(
                 modifier = Modifier
-                    .size(33.dp)
+                    .size(33.dp)                                      // was 33.dp — restore hero size
                     .clip(CircleShape)
-                    .background(Brush.linearGradient(listOf(AccentGreen, Color(0xFF8DB870))))
-                    .clickable { navController.navigate(Routes.Profile) },
+                    .clickable{
+                        navController.navigate(Routes.Profile)
+                    }
+                    .background(Brush.linearGradient(listOf(YellowAccent, Color(0xFFE8A030))))
+                    .border(4.dp, Color(0x4DFFFFFF), CircleShape),     // restore the border too
                 contentAlignment = Alignment.Center
             ) {
-                Text("AK", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                if (profileImageModel != null) {
+                    SubcomposeAsyncImage(
+                        model = profileImageModel,
+                        contentDescription = "Profile photo",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                        loading = {
+                            CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp, color = Color.White)
+                        },
+                        error = { Text("👨‍🌾", fontSize = 32.sp) }   // keep the farmer emoji here, not initials
+                    )
+                } else {
+                    Text("👨‍🌾", fontSize = 32.sp)
+                }
             }
         }
     }
@@ -183,7 +274,14 @@ private fun DashboardTopBar(navController: NavController) {
 
 // ── Green Dashboard Header with name + weather ────────────────────────────────
 @Composable
-private fun DashboardHeader(navController: NavController, bottomNavController: NavHostController) {
+private fun DashboardHeader(
+    navController: NavController,
+    bottomNavController: NavHostController,
+    userName: String,
+    weather: WeatherResponse?,
+    placeName: String?,
+    hasLocationPermission: Boolean
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -193,34 +291,72 @@ private fun DashboardHeader(navController: NavController, bottomNavController: N
         Column {
             Text("Good Morning ☀️", fontSize = 13.sp, color = Color(0xB3FFFFFF))
             Text(
-                "Archisman Khanra",
+                userName.ifBlank { "Farmer" },
                 fontFamily = FontFamily.Serif,
                 fontSize = 21.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White
             )
             Spacer(Modifier.height(14.dp))
-            // Weather strip
+            // Weather strip — live data from WeatherViewModel, refreshed every visit.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(13.dp))
                     .background(Color(0x26FFFFFF))
                     .clickable { navController.navigate(Routes.Weather) }
+                    .horizontalScroll(rememberScrollState())
                     .padding(11.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Text("⛅", fontSize = 26.sp)
-                    Column {
-                        Text("28°C", fontSize = 19.sp, fontWeight = FontWeight.Medium, color = Color.White)
-                        Text("Pune, Maharashtra · Tap for forecast", fontSize = 12.sp, color = Color(0xB3FFFFFF))
+            )
+            {
+                when {
+                    !hasLocationPermission -> {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                            Text("📍", fontSize = 22.sp)
+                            Text(
+                                "Enable location for live weather",
+                                fontSize = 13.sp,
+                                color = Color(0xE6FFFFFF)
+                            )
+                        }
                     }
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text("💧 72%", fontSize = 11.sp, color = Color(0xCCFFFFFF))
-                    Text("🌬️ 12 km/h", fontSize = 11.sp, color = Color(0xCCFFFFFF))
+                    weather == null -> {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Text("Fetching weather…", fontSize = 13.sp, color = Color(0xE6FFFFFF))
+                        }
+                    }
+                    else -> {
+                        val info = weather.weather.firstOrNull()
+                        val tempC = weather.main.temp.kelvinToCelsius()
+                        val humidity = weather.main.humidity
+                        val windKmh = (weather.wind.speed * 3.6).roundToInt()
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(9.dp)
+                        ) {
+                            AnimatedWeatherIcon(icon = info?.icon ?: "01d", size = 34.dp)
+                            Column {
+                                Text("$tempC°C", fontSize = 19.sp, fontWeight = FontWeight.Medium, color = Color.White)
+                                Text(
+                                    "${placeName ?: "Current location"}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xB3FFFFFF)
+                                )
+                            }
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("💧 $humidity%", fontSize = 11.sp, color = Color(0xCCFFFFFF))
+                            Text("🌬️ $windKmh km/h", fontSize = 11.sp, color = Color(0xCCFFFFFF))
+                        }
+                    }
                 }
             }
         }
@@ -246,13 +382,7 @@ private fun QuickActionsGrid(navController: NavController, bottomNavController: 
                 launchSingleTop = true
                 restoreState = true
             }
-        },
-//        QuickAction("🏔️", "Soil Analysis", "Soil health report") {
-//            navController.navigate(Routes.Soil) // outer navController, since it's registered there
-//        },
-//        QuickAction("🌦️", "Weather", "7-day forecast") {
-//            navController.navigate(Routes.Weather) // outer navController, same as top bar
-//        }
+        }
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {

@@ -3,7 +3,7 @@ package com.tech.cropify.network
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import com.tech.cropify.network.AppEnv.D_AUTH
+import com.tech.cropify.BuildConfig
 import okhttp3.Interceptor
 import okhttp3.Response
 
@@ -17,7 +17,7 @@ class AuthInterceptor(private val context: Context): Interceptor {
         requestBuilder.addHeader(
             "dauth",
             //  "android@1212"
-            "$D_AUTH"
+            "${BuildConfig.D_AUTH}"
             //"7777777"
         )
 
